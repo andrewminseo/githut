@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHut - Free Study Tools</title>
+    <style>
+        :root {
+            --primary: #4257b2;
+            --secondary: #3ccfcf;
+            --background: #f6f7fb;
+            --text: #303545;
+            --light-gray: #edeff4;
+            --white: #ffffff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+        }
+        
+        header {
+            background-color: var(--white);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 1.5rem;
+        }
+        
+        nav ul li a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+        }
+        
+        .auth-buttons button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .login-btn {
+            background-color: var(--white);
+            color: var(--primary);
+            margin-right: 10px;
+            border: 1px solid var(--primary);
+        }
+        
+        .signup-btn {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        
+        .search-box {
+            display: flex;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 1rem;
+        }
+        
+        .search-box button {
+            padding: 1rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .feature-card {
+            background-color: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        
+        .create-set {
+            background-color: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin: 3rem 0;
+        }
+        
+        .create-set h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .study-set {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .set-title {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .card-container {
+            margin-bottom: 1rem;
+        }
+        
+        .card {
+            display: flex;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+        
+        .card input {
+            flex: 1;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .add-card {
+            background-color: var(--white);
+            color: var(--primary);
+            border: 1px dashed var(--primary);
+            padding: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .action-buttons button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .import-btn {
+            background-color: var(--white);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .create-btn {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+        
+        .study-modes {
+            display: none;
+            margin-top: 2rem;
+        }
+        
+        .study-modes h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .mode-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .mode-btn {
+            background-color: var(--white);
+            color: var(--text);
+            border: 1px solid #ddd;
+            padding: 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .import-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+        }
+        
+        .modal-content h3 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .modal-content input {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .cancel-btn {
+            background-color: var(--light-gray);
+            color: var(--text);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .import-confirm-btn {
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .flashcard-view {
+            display: none;
+            margin-top: 2rem;
+        }
+        
+        .flashcard {
+            background-color: var(--white);
+            height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .flashcard-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .prev-btn, .next-btn {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+        
+        .flip-btn {
+            background-color: var(--secondary);
+            color: var(--white);
+        }
+        
+        footer {
+            background-color: var(--white);
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+            border-top: 1px solid var(--light-gray);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">GitHut</div>
+        <nav>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Library</a></li>
+                <li><a href="#">Features</a></li>
+                <li><a href="#">About</a></li>
+            </ul>
+        </nav>
+        <div class="auth-buttons">
+            <button class="login-btn">Log In</button>
+            <button class="signup-btn">Sign Up</button>
+        </div>
+    </header>
+    
+    <main>
+        <section class="hero">
+            <h1>Study Smarter, Not Harder</h1>
+            <p>Create, share, and study flashcards for free - without any limitations</p>
+            <div class="search-box">
+                <input type="text" placeholder="Search for study sets...">
+                <button>Search</button>
+            </div>
+        </section>
+        
+        <section class="features">
+            <div class="feature-card">
+                <h3>Create Flashcards</h3>
+                <p>Make your own custom study sets with unlimited cards, images, and formatting options</p>
+            </div>
+            <div class="feature-card">
+                <h3>Import from Quizlet</h3>
+                <p>Easily import your existing study sets from Quizlet or other platforms</p>
+            </div>
+            <div class="feature-card">
+                <h3>Multiple Study Modes</h3>
+                <p>Learn with flashcards, practice tests, matching games, and more - all for free</p>
+            </div>
+        </section>
+        
+        <section class="create-set">
+            <h2>Create a New Study Set</h2>
+            <div class="study-set">
+                <input type="text" class="set-title" placeholder="Enter a title for your study set...">
+                <div class="card-container">
+                    <div class="card">
+                        <input type="text" placeholder="Term">
+                        <input type="text" placeholder="Definition">
+                    </div>
+                    <div class="card">
+                        <input type="text" placeholder="Term">
+                        <input type="text" placeholder="Definition">
+                    </div>
+                </div>
+                <button class="add-card">+ Add Card</button>
+                <div class="action-buttons">
+                    <button class="import-btn" id="import-button">Import from Quizlet</button>
+                    <button class="create-btn" id="create-button">Create Study Set</button>
+                </div>
+            </div>
+        </section>
+        
+        <section class="study-modes" id="study-modes">
+            <h2>Choose a Study Mode</h2>
+            <div class="mode-buttons">
+                <div class="mode-btn" id="flashcard-button">Flashcards</div>
+                <div class="mode-btn">Learn</div>
+                <div class="mode-btn">Test</div>
+                <div class="mode-btn">Match</div>
+                <div class="mode-btn">Write</div>
+                <div class="mode-btn">Spell</div>
+            </div>
+        </section>
+        
+        <section class="flashcard-view" id="flashcard-view">
+            <div class="flashcard" id="flashcard">
+                <div class="flashcard-front">Term will appear here</div>
+                <div class="flashcard-back">Definition will appear here</div>
+            </div>
+            <div class="flashcard-controls">
+                <button class="flashcard-btn prev-btn">Previous</button>
+                <button class="flashcard-btn flip-btn" id="flip-button">Flip</button>
+                <button class="flashcard-btn next-btn">Next</button>
+            </div>
+        </section>
+    </main>
+    
+    <div class="import-modal" id="import-modal">
+        <div class="modal-content">
+            <h3>Import from Quizlet</h3>
+            <input type="text" placeholder="Paste Quizlet URL or set ID here...">
+            <div class="modal-buttons">
+                <button class="cancel-btn" id="cancel-import">Cancel</button>
+                <button class="import-confirm-btn">Import</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 GitHut. All rights reserved.</p>
+        <p>Free study tools for everyone, forever.</p>
+    </footer>
+    
+    <script>
+        // DOM elements
+        const importButton = document.getElementById('import-button');
+        const importModal = document.getElementById('import-modal');
+        const cancelImport = document.getElementById('cancel-import');
+        const createButton = document.getElementById('create-button');
+        const studyModes = document.getElementById('study-modes');
+        const flashcardButton = document.getElementById('flashcard-button');
+        const flashcardView = document.getElementById('flashcard-view');
+        const flashcard = document.getElementById('flashcard');
+        const flipButton = document.getElementById('flip-button');
+        const addCardButton = document.querySelector('.add-card');
+        const cardContainer = document.querySelector('.card-container');
+        
+        // Sample data structure for study sets
+        let currentSet = {
+            title: "",
+            cards: [
+                { term: "", definition: "" },
+                { term: "", definition: "" }
+            ]
+        };
+        
+        let currentCardIndex = 0;
+        
+        // Import modal functionality
+        importButton.addEventListener('click', () => {
+            importModal.style.display = 'flex';
+        });
+        
+        cancelImport.addEventListener('click', () => {
+            importModal.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === importModal) {
+                importModal.style.display = 'none';
+            }
+        });
+        
+        // Add card functionality
+        addCardButton.addEventListener('click', () => {
+            const newCard = document.createElement('div');
+            newCard.className = 'card';
+            newCard.innerHTML = `
+                <input type="text" placeholder="Term">
+                <input type="text" placeholder="Definition">
+            `;
+            cardContainer.appendChild(newCard);
+            
+            // Add to data structure
+            currentSet.cards.push({ term: "", definition: "" });
+        });
+        
+        // Create study set functionality
+        createButton.addEventListener('click', () => {
+            // Gather data from inputs
+            currentSet.title = document.querySelector('.set-title').value;
+            
+            const cardElements = document.querySelectorAll('.card');
+            currentSet.cards = [];
+            
+            cardElements.forEach((card, index) => {
+                const inputs = card.querySelectorAll('input');
+                currentSet.cards.push({
+                    term: inputs[0].value,
+                    definition: inputs[1].value
+                });
+            });
+            
+            // Show study modes
+            studyModes.style.display = 'block';
+            
+            // Scroll to study modes
+            studyModes.scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        // Flashcard functionality
+        flashcardButton.addEventListener('click', () => {
+            flashcardView.style.display = 'block';
+            updateFlashcard();
+            
+            // Scroll to flashcard view
+            flashcardView.scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        // Flip flashcard
+        flipButton.addEventListener('click', () => {
+            flashcard.classList.toggle('flipped');
+        });
+        
+        // Previous card
+        document.querySelector('.prev-btn').addEventListener('click', () => {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                updateFlashcard();
+                flashcard.classList.remove('flipped');
+            }
+        });
+        
+        // Next card
+        document.querySelector('.next-btn').addEventListener('click', () => {
+            if (currentCardIndex < currentSet.cards.length - 1) {
+                currentCardIndex++;
+                updateFlashcard();
+                flashcard.classList.remove('flipped');
+            }
+        });
+        
+        // Update flashcard content
+        function updateFlashcard() {
+            const card = currentSet.cards[currentCardIndex];
+            document.querySelector('.flashcard-front').textContent = card.term || "Term";
+            document.querySelector('.flashcard-back').textContent = card.definition || "Definition";
+        }
+        
+        // Import from Quizlet function (mock implementation)
+        document.querySelector('.import-confirm-btn').addEventListener('click', () => {
+            const quizletUrl = document.querySelector('.modal-content input').value;
+            
+            // Mock function - in a real implementation, this would parse the Quizlet data
+            if (quizletUrl) {
+                // This is a mock response - in reality, you would fetch and parse the Quizlet content
+                const mockImportedSet = {
+                    title: "Imported Quizlet Set",
+                    cards: [
+                        { term: "Photosynthesis", definition: "The process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water." },
+                        { term: "Mitochondria", definition: "An organelle found in large numbers in most cells, in which the biochemical processes of respiration and energy production occur." },
+                        { term: "Nucleus", definition: "A central organelle containing the cell's genetic material." },
+                        { term: "Osmosis", definition: "The process by which molecules of a solvent tend to pass through a semipermeable membrane from a less concentrated solution into a more concentrated one." }
+                    ]
+                };
+                
+                // Update the current set with imported data
+                currentSet = mockImportedSet;
+                
+                // Update the UI with the imported data
+                document.querySelector('.set-title').value = currentSet.title;
+                
+                // Clear existing cards
+                cardContainer.innerHTML = '';
+                
+                // Add imported cards to UI
+                currentSet.cards.forEach(card => {
+                    const newCard = document.createElement('div');
+                    newCard.className = 'card';
+                    newCard.innerHTML = `
+                        <input type="text" value="${card.term}" placeholder="Term">
+                        <input type="text" value="${card.definition}" placeholder="Definition">
+                    `;
+                    cardContainer.appendChild(newCard);
+                });
+                
+                // Close the modal
+                importModal.style.display = 'none';
+                
+                // Show success message (could be enhanced)
+                alert("Set imported successfully!");
+            }
+        });
+    </script>
+</body>
+</html>
