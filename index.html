@@ -4,32 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitHut - Free Study Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
             --primary: #4257b2;
+            --primary-light: #5a6ec8;
+            --primary-dark: #34468f;
             --secondary: #3ccfcf;
-            --background: #f6f7fb;
+            --secondary-light: #5adede;
+            --secondary-dark: #2ba6a6;
+            --background: #f8f9fd;
             --text: #303545;
-            --light-gray: #edeff4;
+            --text-light: #565c73;
+            --gray-100: #f3f4f9;
+            --gray-200: #e6e8f0;
+            --gray-300: #d8dae5;
             --white: #ffffff;
+            --success: #42b983;
+            --warning: #ffba00;
+            --danger: #ff5252;
+            --border-radius: 10px;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+            --transition: all 0.3s ease;
         }
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', sans-serif;
         }
         
         body {
             background-color: var(--background);
             color: var(--text);
+            line-height: 1.6;
         }
         
+        /* Header Styles */
         header {
             background-color: var(--white);
             padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -39,77 +66,158 @@
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i {
+            color: var(--secondary);
         }
         
         nav ul {
             display: flex;
             list-style: none;
-        }
-        
-        nav ul li {
-            margin-left: 1.5rem;
+            gap: 2rem;
         }
         
         nav ul li a {
             text-decoration: none;
             color: var(--text);
             font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+            padding: 0.5rem 0;
         }
         
-        .auth-buttons button {
-            padding: 0.5rem 1rem;
+        nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        nav ul li a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--primary);
+            transition: var(--transition);
+        }
+
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
             border: none;
-            border-radius: 4px;
+            border-radius: var(--border-radius);
             cursor: pointer;
             font-weight: 500;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
         
-        .login-btn {
-            background-color: var(--white);
-            color: var(--primary);
-            margin-right: 10px;
-            border: 1px solid var(--primary);
-        }
-        
-        .signup-btn {
+        .btn-primary {
             background-color: var(--primary);
             color: var(--white);
         }
         
-        main {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
         
+        .btn-outline {
+            background-color: var(--white);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--gray-100);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: var(--white);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--secondary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Mobile menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Hero Section */
         .hero {
             text-align: center;
-            margin-bottom: 3rem;
+            margin: 4rem 0;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .hero h1 {
-            font-size: 2.5rem;
+            font-size: 3rem;
             margin-bottom: 1rem;
+            background-image: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
         }
         
         .hero p {
             font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 2rem;
+            color: var(--text-light);
+            margin-bottom: 2.5rem;
         }
         
         .search-box {
             display: flex;
             max-width: 600px;
             margin: 0 auto;
+            box-shadow: var(--shadow-md);
+            border-radius: var(--border-radius);
+            overflow: hidden;
         }
         
         .search-box input {
             flex: 1;
-            padding: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px 0 0 4px;
+            padding: 1rem 1.5rem;
+            border: none;
             font-size: 1rem;
+            outline: none;
         }
         
         .search-box button {
@@ -117,42 +225,135 @@
             background-color: var(--primary);
             color: white;
             border: none;
-            border-radius: 0 4px 4px 0;
             cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .search-box button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        /* Features Section */
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: var(--primary);
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 3rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .features {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
-            margin: 3rem 0;
+            margin: 4rem 0;
         }
         
         .feature-card {
             background-color: var(--white);
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
             text-align: center;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-image: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        .feature-card i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
         }
         
         .feature-card h3 {
             font-size: 1.5rem;
             margin-bottom: 1rem;
-            color: var(--primary);
+            color: var(--text);
+        }
+
+        .feature-card p {
+            color: var(--text-light);
         }
         
-        .create-set {
+        /* Tabs Section */
+        .tabs {
+            margin: 4rem 0;
             background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .tab-nav {
+            display: flex;
+            border-bottom: 1px solid var(--gray-200);
+            background-color: var(--gray-100);
+        }
+
+        .tab-btn {
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            font-weight: 500;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+            text-align: center;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            background-color: var(--white);
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .tab-btn:hover:not(.active) {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        .tab-content {
             padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin: 3rem 0;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
         }
         
-        .create-set h2 {
-            margin-bottom: 1.5rem;
-            color: var(--primary);
+        /* Create Set Section */
+        .create-set {
+            padding: 2rem;
         }
         
         .study-set {
@@ -162,176 +363,329 @@
         
         .set-title {
             width: 100%;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
             font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .set-title:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(66, 87, 178, 0.1);
+        }
+
+        .set-description {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .set-description:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(66, 87, 178, 0.1);
         }
         
         .card-container {
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .card {
             display: flex;
             margin-bottom: 1rem;
             gap: 1rem;
+            position: relative;
         }
         
-        .card input {
+        .card-number {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 30px;
+            height: 30px;
+            background-color: var(--primary);
+            color: var(--white);
+            border-radius: 50%;
+            font-size: 0.8rem;
+            font-weight: 500;
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .card-input-group {
             flex: 1;
-            padding: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card input, .card textarea {
+            padding: 1rem 1.5rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
             font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .card input:focus, .card textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(66, 87, 178, 0.1);
+        }
+
+        .card textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .card-tools {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .card-tool-btn {
+            padding: 0.3rem 0.6rem;
+            background-color: var(--gray-100);
+            color: var(--text-light);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: var(--transition);
+        }
+        
+        .card-tool-btn:hover {
+            background-color: var(--gray-200);
+            color: var(--text);
+        }
+        
+        .remove-card-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            opacity: 0.5;
+            transition: var(--transition);
+        }
+        
+        .remove-card-btn:hover {
+            opacity: 1;
         }
         
         .add-card {
             background-color: var(--white);
             color: var(--primary);
-            border: 1px dashed var(--primary);
+            border: 2px dashed var(--primary-light);
             padding: 1rem;
-            border-radius: 4px;
+            border-radius: var(--border-radius);
             cursor: pointer;
             width: 100%;
-            margin-bottom: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .add-card:hover {
+            background-color: var(--gray-100);
         }
         
         .action-buttons {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
         }
         
-        .action-buttons button {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .action-buttons-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Bulk Import Section */
+        .bulk-import-container {
+            margin-bottom: 2rem;
+        }
+
+        .bulk-text {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .bulk-text:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(66, 87, 178, 0.1);
+        }
+
+        .separator-options {
+            margin: 1rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .separator-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .separator-option input[type="radio"] {
+            accent-color: var(--primary);
+        }
+
+        .separator-preview {
+            padding: 1rem;
+            background-color: var(--gray-100);
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+        }
+
+        .separator-preview-item {
+            display: flex;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--gray-300);
+        }
+
+        .separator-preview-term {
             font-weight: 500;
+            margin-right: 1rem;
+            min-width: 200px;
         }
-        
-        .import-btn {
-            background-color: var(--white);
-            color: var(--primary);
-            border: 1px solid var(--primary);
-        }
-        
-        .create-btn {
-            background-color: var(--primary);
-            color: var(--white);
-        }
-        
+
+        /* Study Modes */
         .study-modes {
-            display: none;
-            margin-top: 2rem;
-        }
-        
-        .study-modes h2 {
-            margin-bottom: 1.5rem;
-            color: var(--primary);
+            margin-top: 3rem;
         }
         
         .mode-buttons {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+            gap: 1.5rem;
         }
         
         .mode-btn {
             background-color: var(--white);
             color: var(--text);
-            border: 1px solid #ddd;
-            padding: 1.5rem;
-            border-radius: 8px;
+            border: 1px solid var(--gray-300);
+            padding: 2rem 1.5rem;
+            border-radius: var(--border-radius);
             cursor: pointer;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .mode-btn i {
+            font-size: 2rem;
+            color: var(--primary);
         }
         
         .mode-btn:hover {
             border-color: var(--primary);
-            color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .mode-btn h4 {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .mode-btn p {
+            font-size: 0.9rem;
+            color: var(--text-light);
         }
         
-        .import-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal-content {
-            background-color: var(--white);
+        /* Flashcard View */
+        .flashcard-view {
+            margin-top: 3rem;
             padding: 2rem;
-            border-radius: 8px;
-            width: 500px;
-            max-width: 90%;
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
         }
-        
-        .modal-content h3 {
-            margin-bottom: 1.5rem;
+
+        .flashcard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .flashcard-header h2 {
             color: var(--primary);
         }
-        
-        .modal-content input {
-            width: 100%;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        
-        .modal-buttons {
+
+        .flashcard-progress {
             display: flex;
-            justify-content: flex-end;
+            align-items: center;
             gap: 1rem;
         }
-        
-        .cancel-btn {
-            background-color: var(--light-gray);
-            color: var(--text);
-            border: none;
-            padding: 0.75rem 1.5rem;
+
+        .progress-bar {
+            width: 200px;
+            height: 8px;
+            background-color: var(--gray-200);
             border-radius: 4px;
-            cursor: pointer;
+            overflow: hidden;
         }
-        
-        .import-confirm-btn {
+
+        .progress-fill {
+            height: 100%;
             background-color: var(--primary);
-            color: var(--white);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
-            cursor: pointer;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-light);
         }
         
-        .flashcard-view {
-            display: none;
-            margin-top: 2rem;
+        .flashcard-container {
+            perspective: 1000px;
+            margin-bottom: 2rem;
         }
         
         .flashcard {
             background-color: var(--white);
             height: 300px;
-            border-radius: 8px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            padding: 2rem;
-            text-align: center;
-            margin-bottom: 2rem;
-            cursor: pointer;
-            transition: transform 0.6s;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            position: relative;
             transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
         }
         
         .flashcard.flipped {
@@ -345,13 +699,35 @@
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 2rem;
+            border-radius: var(--border-radius);
+        }
+
+        .flashcard-front {
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
         }
         
         .flashcard-back {
+            background-color: var(--primary-light);
+            color: var(--white);
             transform: rotateY(180deg);
+        }
+
+        .card-content {
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .card-hint {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            opacity: 0.7;
         }
         
         .flashcard-controls {
@@ -359,48 +735,532 @@
             justify-content: center;
             gap: 1rem;
         }
-        
-        .flashcard-btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
         }
         
-        .prev-btn, .next-btn {
+        .modal-content {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        /* Library Section */
+        .library-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            background-color: var(--white);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .study-sets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .study-set-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .study-set-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .study-set-header {
+            padding: 1.5rem;
             background-color: var(--primary);
             color: var(--white);
         }
-        
-        .flip-btn {
-            background-color: var(--secondary);
+
+        .study-set-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .study-set-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .study-set-body {
+            padding: 1.5rem;
+            flex: 1;
+        }
+
+        .preview-cards {
+            margin-bottom: 1rem;
+        }
+
+        .preview-card {
+            padding: 0.75rem;
+            background-color: var(--gray-100);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .preview-term {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .preview-definition {
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .study-set-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .set-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--gray-100);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .action-icon:hover {
+            background-color: var(--primary-light);
             color: var(--white);
         }
-        
+
+        /* Footer */
         footer {
             background-color: var(--white);
-            padding: 2rem;
-            text-align: center;
+            padding: 4rem 2rem;
+            margin-top: 5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .footer-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+        }
+
+        .footer-column h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .footer-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+            padding-left: 5px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            transition: var(--transition);
+        }
+
+        .social-link:hover {
+            background-color: var(--primary);
+            color: var(--white);
+            transform: translateY(-3px);
+        }
+
+        .footer-bottom {
             margin-top: 3rem;
-            border-top: 1px solid var(--light-gray);
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            background-color: var(--white);
+            color: var(--text);
+            box-shadow: var(--shadow-md);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s forwards;
+            max-width: 350px;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 0.8rem;
+        }
+
+        .toast.success .toast-icon {
+            background-color: var(--success);
+            color: var(--white);
+        }
+
+        .toast.error .toast-icon {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .toast.warning .toast-icon {
+            background-color: var(--warning);
+            color: var(--white);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .toast-message {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: var(--text-light);
+            cursor: pointer;
+            opacity: 0.7;
+            transition: var(--transition);
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: inherit;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(66, 87, 178, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: calc(50% - 12px);
+            left: calc(50% - 12px);
+            z-index: 11;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            nav {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 70%;
+                height: 100vh;
+                background-color: var(--white);
+                z-index: 1000;
+                transition: var(--transition);
+                box-shadow: var(--shadow-lg);
+                padding: 2rem;
+            }
+
+            nav.active {
+                left: 0;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .card-number {
+                position: static;
+                transform: none;
+                margin-bottom: 0.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .action-buttons-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .action-buttons-group .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .section-title {
+                font-size: 1.6rem;
+            }
+
+            .feature-card {
+                padding: 1.5rem 1rem;
+            }
+
+            .mode-buttons {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <header>
-        <div class="logo">GitHut</div>
-        <nav>
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Library</a></li>
-                <li><a href="#">Features</a></li>
-                <li><a href="#">About</a></li>
-            </ul>
-        </nav>
-        <div class="auth-buttons">
-            <button class="login-btn">Log In</button>
-            <button class="signup-btn">Sign Up</button>
+        <div class="header-container">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                GitHut
+            </div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav id="nav">
+                <ul>
+                    <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#library"><i class="fas fa-book"></i> Library</a></li>
+                    <li><a href="#create"><i class="fas fa-plus-circle"></i> Create</a></li>
+                    <li><a href="#"><i class="fas fa-info-circle"></i> About</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <button class="btn btn-outline" id="login-btn"><i class="fas fa-sign-in-alt"></i> Log In</button>
+                <button class="btn btn-primary" id="signup-btn"><i class="fas fa-user-plus"></i> Sign Up</button>
+            </div>
         </div>
     </header>
     
@@ -409,250 +1269,503 @@
             <h1>Study Smarter, Not Harder</h1>
             <p>Create, share, and study flashcards for free - without any limitations</p>
             <div class="search-box">
-                <input type="text" placeholder="Search for study sets...">
-                <button>Search</button>
+                <input type="text" placeholder="Search for study sets, classes, or users...">
+                <button><i class="fas fa-search"></i> Search</button>
             </div>
         </section>
         
         <section class="features">
             <div class="feature-card">
+                <i class="fas fa-edit"></i>
                 <h3>Create Flashcards</h3>
                 <p>Make your own custom study sets with unlimited cards, images, and formatting options</p>
             </div>
             <div class="feature-card">
-                <h3>Import from Quizlet</h3>
-                <p>Easily import your existing study sets from Quizlet or other platforms</p>
+                <i class="fas fa-file-import"></i>
+                <h3>Bulk Import</h3>
+                <p>Easily convert unformatted text to flashcards or import from other platforms like Quizlet</p>
             </div>
             <div class="feature-card">
+                <i class="fas fa-graduation-cap"></i>
                 <h3>Multiple Study Modes</h3>
                 <p>Learn with flashcards, practice tests, matching games, and more - all for free</p>
             </div>
+            <div class="feature-card">
+                <i class="fas fa-cloud"></i>
+                <h3>Cloud Storage</h3>
+                <p>Access your study sets from anywhere with secure cloud storage and synchronization</p>
+            </div>
         </section>
         
-        <section class="create-set">
-            <h2>Create a New Study Set</h2>
-            <div class="study-set">
-                <input type="text" class="set-title" placeholder="Enter a title for your study set...">
-                <div class="card-container">
-                    <div class="card">
-                        <input type="text" placeholder="Term">
-                        <input type="text" placeholder="Definition">
-                    </div>
-                    <div class="card">
-                        <input type="text" placeholder="Term">
-                        <input type="text" placeholder="Definition">
+        <section class="tabs">
+            <div class="tab-nav">
+                <button class="tab-btn active" data-target="create-tab">Create Cards</button>
+                <button class="tab-btn" data-target="bulk-tab">Bulk Import</button>
+                <button class="tab-btn" data-target="import-tab">Import from Quizlet</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Create Cards Tab -->
+                <div class="tab-pane active" id="create-tab">
+                    <div class="create-set">
+                        <div class="study-set">
+                            <input type="text" class="set-title" placeholder="Enter a title for your study set...">
+                            <textarea class="set-description" placeholder="Add a description (optional)..."></textarea>
+                            
+                            <div class="card-container">
+                                <div class="card">
+                                    <div class="card-number">1</div>
+                                    <div class="card-input-group">
+                                        <input type="text" placeholder="Term">
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-input-group">
+                                        <textarea placeholder="Definition"></textarea>
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
+                                        </div>
+                                    </div>
+                                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-number">2</div>
+                                    <div class="card-input-group">
+                                        <input type="text" placeholder="Term">
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-input-group">
+                                        <textarea placeholder="Definition"></textarea>
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
+                                        </div>
+                                    </div>
+                                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            
+                            <button class="add-card" id="add-card-btn">
+                                <i class="fas fa-plus"></i> Add Card
+                            </button>
+                            
+                            <div class="action-buttons">
+                                <div class="action-buttons-group">
+                                    <button class="btn btn-outline"><i class="fas fa-cog"></i> Settings</button>
+                                </div>
+                                <div class="action-buttons-group">
+                                    <button class="btn btn-outline"><i class="fas fa-save"></i> Save Draft</button>
+                                    <button class="btn btn-primary" id="create-set-btn"><i class="fas fa-check"></i> Create Study Set</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <button class="add-card">+ Add Card</button>
-                <div class="action-buttons">
-                    <button class="import-btn" id="import-button">Import from Quizlet</button>
-                    <button class="create-btn" id="create-button">Create Study Set</button>
+                
+                <!-- Bulk Import Tab -->
+                <div class="tab-pane" id="bulk-tab">
+                    <div class="bulk-import-container">
+                        <p>Paste your content below. Each term and definition should be separated by your chosen separator.</p>
+                        <textarea class="bulk-text" placeholder="Example:
+Photosynthesis - The process by which green plants use sunlight to synthesize foods with carbon dioxide and water
+Mitochondria - Organelles in cells that generate energy for the cell
+Osmosis - The movement of water through a semipermeable membrane"></textarea>
+                        
+                        <div class="separator-options">
+                            <p>Separator between term and definition:</p>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-dash" name="separator" value="-" checked>
+                                <label for="separator-dash">Dash (-)</label>
+                            </div>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-colon" name="separator" value=":">
+                                <label for="separator-colon">Colon (:)</label>
+                            </div>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-tab" name="separator" value="tab">
+                                <label for="separator-tab">Tab</label>
+                            </div>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-custom" name="separator" value="custom">
+                                <label for="separator-custom">Custom:</label>
+                                <input type="text" id="custom-separator" placeholder="Enter custom separator" disabled>
+                            </div>
+                        </div>
+                        
+                        <div class="separator-preview" id="separator-preview">
+                            <h4>Preview:</h4>
+                            <div class="separator-preview-content">
+                                <!-- Preview content will be inserted here -->
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <div class="action-buttons-group">
+                                <button class="btn btn-outline"><i class="fas fa-undo"></i> Clear</button>
+                            </div>
+                            <div class="action-buttons-group">
+                                <button class="btn btn-primary" id="bulk-import-btn"><i class="fas fa-file-import"></i> Create Cards from Text</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Import from Quizlet Tab -->
+                <div class="tab-pane" id="import-tab">
+                    <div class="import-container">
+                        <p>Enter the URL of the Quizlet set you want to import:</p>
+                        <input type="text" class="set-title" placeholder="https://quizlet.com/123456789/example-set-flash-cards/">
+                        
+                        <div class="action-buttons">
+                            <div class="action-buttons-group">
+                                <button class="btn btn-outline"><i class="fas fa-question-circle"></i> Help</button>
+                            </div>
+                            <div class="action-buttons-group">
+                                <button class="btn btn-primary" id="quizlet-import-btn"><i class="fas fa-file-import"></i> Import from Quizlet</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
         
         <section class="study-modes" id="study-modes">
-            <h2>Choose a Study Mode</h2>
+            <h2 class="section-title">Choose a Study Mode</h2>
+            <p class="section-subtitle">Different learning modes help you master the material in various ways</p>
+            
             <div class="mode-buttons">
-                <div class="mode-btn" id="flashcard-button">Flashcards</div>
-                <div class="mode-btn">Learn</div>
-                <div class="mode-btn">Test</div>
-                <div class="mode-btn">Match</div>
-                <div class="mode-btn">Write</div>
-                <div class="mode-btn">Spell</div>
+                <div class="mode-btn" id="flashcard-button">
+                    <i class="fas fa-clone"></i>
+                    <h4>Flashcards</h4>
+                    <p>Review cards one by one and test your memory</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h4>Learn</h4>
+                    <p>Track your progress with spaced repetition</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-pencil-alt"></i>
+                    <h4>Test</h4>
+                    <p>Challenge yourself with various question types</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-th"></i>
+                    <h4>Match</h4>
+                    <p>Match terms and definitions against the clock</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-keyboard"></i>
+                    <h4>Write</h4>
+                    <p>Type your answers to check understanding</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-volume-up"></i>
+                    <h4>Spell</h4>
+                    <p>Practice spelling with audio prompts</p>
+                </div>
             </div>
         </section>
         
         <section class="flashcard-view" id="flashcard-view">
-            <div class="flashcard" id="flashcard">
-                <div class="flashcard-front">Term will appear here</div>
-                <div class="flashcard-back">Definition will appear here</div>
+            <div class="flashcard-header">
+                <h2>Biology 101: Chapter 3</h2>
+                <div class="flashcard-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <span class="progress-text" id="progress-text">Card 1 of 12</span>
+                </div>
             </div>
+            
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                    <div class="flashcard-front">
+                        <div class="card-content">Photosynthesis</div>
+                        <div class="card-hint">Click to flip</div>
+                    </div>
+                    <div class="flashcard-back">
+                        <div class="card-content">The process by which green plants use sunlight to synthesize foods with carbon dioxide and water</div>
+                        <div class="card-hint">Click to flip back</div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="flashcard-controls">
-                <button class="flashcard-btn prev-btn">Previous</button>
-                <button class="flashcard-btn flip-btn" id="flip-button">Flip</button>
-                <button class="flashcard-btn next-btn">Next</button>
+                <button class="btn btn-outline" id="prev-btn"><i class="fas fa-chevron-left"></i> Previous</button>
+                <button class="btn btn-secondary" id="flip-btn"><i class="fas fa-retweet"></i> Flip</button>
+                <button class="btn btn-primary" id="next-btn">Next <i class="fas fa-chevron-right"></i></button>
+            </div>
+        </section>
+        
+        <section class="library" id="library">
+            <h2 class="section-title">Study Set Library</h2>
+            <p class="section-subtitle">Browse and access all your study sets in one place</p>
+            
+            <div class="library-controls">
+                <div class="filter-options">
+                    <select class="filter-select">
+                        <option value="all">All Sets</option>
+                        <option value="created">Created by me</option>
+                        <option value="starred">Starred</option>
+                        <option value="recent">Recently viewed</option>
+                    </select>
+                    <select class="filter-select">
+                        <option value="recent">Recently updated</option>
+                        <option value="oldest">Oldest first</option>
+                        <option value="alphabetical">Alphabetical</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary"><i class="fas fa-plus"></i> Create New Set</button>
+            </div>
+            
+            <div class="study-sets-grid">
+                <!-- Sample Study Set Cards -->
+                <div class="study-set-card">
+                    <div class="study-set-header">
+                        <h3 class="study-set-title">Biology 101: Chapter 3</h3>
+                        <div class="study-set-info">
+                            <span>12 cards</span>
+                            <span>Updated 2 days ago</span>
+                        </div>
+                    </div>
+                    <div class="study-set-body">
+                        <div class="preview-cards">
+                            <div class="preview-card">
+                                <div class="preview-term">Photosynthesis</div>
+                                <div class="preview-definition">The process by which green plants use sunlight to synthesize foods with carbon dioxide and water</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Mitochondria</div>
+                                <div class="preview-definition">Organelles in cells that generate energy for the cell</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Osmosis</div>
+                                <div class="preview-definition">The movement of water through a semipermeable membrane</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="study-set-footer">
+                        <button class="btn btn-outline btn-sm">Study</button>
+                        <div class="set-actions">
+                            <div class="action-icon"><i class="fas fa-star"></i></div>
+                            <div class="action-icon"><i class="fas fa-edit"></i></div>
+                            <div class="action-icon"><i class="fas fa-share-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="study-set-card">
+                    <div class="study-set-header">
+                        <h3 class="study-set-title">Spanish Vocabulary</h3>
+                        <div class="study-set-info">
+                            <span>24 cards</span>
+                            <span>Updated 1 week ago</span>
+                        </div>
+                    </div>
+                    <div class="study-set-body">
+                        <div class="preview-cards">
+                            <div class="preview-card">
+                                <div class="preview-term">Hola</div>
+                                <div class="preview-definition">Hello</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Adiós</div>
+                                <div class="preview-definition">Goodbye</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Buenos días</div>
+                                <div class="preview-definition">Good morning</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="study-set-footer">
+                        <button class="btn btn-outline btn-sm">Study</button>
+                        <div class="set-actions">
+                            <div class="action-icon"><i class="fas fa-star"></i></div>
+                            <div class="action-icon"><i class="fas fa-edit"></i></div>
+                            <div class="action-icon"><i class="fas fa-share-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="study-set-card">
+                    <div class="study-set-header">
+                        <h3 class="study-set-title">World History: Ancient Rome</h3>
+                        <div class="study-set-info">
+                            <span>18 cards</span>
+                            <span>Updated 3 days ago</span>
+                        </div>
+                    </div>
+                    <div class="study-set-body">
+                        <div class="preview-cards">
+                            <div class="preview-card">
+                                <div class="preview-term">Julius Caesar</div>
+                                <div class="preview-definition">Roman general and statesman who played a critical role in the events that led to the demise of the Roman Republic</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Roman Senate</div>
+                                <div class="preview-definition">A political institution in ancient Rome</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Colosseum</div>
+                                <div class="preview-definition">An oval amphitheatre in the centre of Rome, Italy</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="study-set-footer">
+                        <button class="btn btn-outline btn-sm">Study</button>
+                        <div class="set-actions">
+                            <div class="action-icon"><i class="fas fa-star"></i></div>
+                            <div class="action-icon"><i class="fas fa-edit"></i></div>
+                            <div class="action-icon"><i class="fas fa-share-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
     
-    <div class="import-modal" id="import-modal">
+    <!-- Login Modal -->
+    <div class="modal" id="login-modal">
         <div class="modal-content">
-            <h3>Import from Quizlet</h3>
-            <input type="text" placeholder="Paste Quizlet URL or set ID here...">
-            <div class="modal-buttons">
-                <button class="cancel-btn" id="cancel-import">Cancel</button>
-                <button class="import-confirm-btn">Import</button>
+            <div class="modal-header">
+                <h3 class="modal-title">Log In to GitHut</h3>
+                <button class="modal-close" id="close-login-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="login-form">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="login-email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
+                        <input type="email" id="login-email" class="set-title" placeholder="Enter your email" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="login-password" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
+                        <input type="password" id="login-password" class="set-title" placeholder="Enter your password" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="remember-me">
+                            <label for="remember-me">Remember me</label>
+                        </div>
+                        <a href="#" style="color: var(--primary); text-decoration: none;">Forgot password?</a>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancel-login">Cancel</button>
+                <button class="btn btn-primary" id="submit-login">Log In</button>
             </div>
         </div>
     </div>
     
+    <!-- Sign Up Modal -->
+    <div class="modal" id="signup-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Your Account</h3>
+                <button class="modal-close" id="close-signup-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="signup-form">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-name" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Full Name</label>
+                        <input type="text" id="signup-name" class="set-title" placeholder="Enter your name" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
+                        <input type="email" id="signup-email" class="set-title" placeholder="Enter your email" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-password" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
+                        <input type="password" id="signup-password" class="set-title" placeholder="Create a password (min. 8 characters)" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-confirm" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Confirm Password</label>
+                        <input type="password" id="signup-confirm" class="set-title" placeholder="Confirm your password" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms">I agree to the <a href="#" style="color: var(--primary);">Terms of Service</a> and <a href="#" style="color: var(--primary);">Privacy Policy</a></label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancel-signup">Cancel</button>
+                <button class="btn btn-primary" id="submit-signup">Sign Up</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container">
+        <!-- Toast notifications will be inserted here -->
+    </div>
+    
     <footer>
-        <p>&copy; 2025 GitHut. All rights reserved.</p>
-        <p>Free study tools for everyone, forever.</p>
+        <div class="footer-container">
+            <div class="footer-column">
+                <h4>GitHut</h4>
+                <p>Free study tools for everyone, forever. Create, share, and learn with flashcards, practice tests, and more.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Features</h4>
+                <div class="footer-links">
+                    <a href="#">Flashcards</a>
+                    <a href="#">Study Modes</a>
+                    <a href="#">Bulk Import</a>
+                    <a href="#">Cloud Storage</a>
+                    <a href="#">Mobile App</a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Resources</h4>
+                <div class="footer-links">
+                    <a href="#">Help Center</a>
+                    <a href="#">Student Blog</a>
+                    <a href="#">Teacher Resources</a>
+                    <a href="#">API Documentation</a>
+                    <a href="#">Community Forum</a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Company</h4>
+                <div class="footer-links">
+                    <a href="#">About Us</a>
+                    <a href="#">Careers</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Contact Us</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 GitHut. All rights reserved.</p>
+        </div>
     </footer>
     
     <script>
         // DOM elements
-        const importButton = document.getElementById('import-button');
-        const importModal = document.getElementById('import-modal');
-        const cancelImport = document.getElementById('cancel-import');
-        const createButton = document.getElementById('create-button');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const nav = document.getElementById('nav');
+        const addCardBtn = document.getElementById('add-card-btn');
+        const cardContainer = document.querySelector('.card-container');
+        const createSetBtn = document.getElementById('create-set-btn');
         const studyModes = document.getElementById('study-modes');
         const flashcardButton = document.getElementById('flashcard-button');
         const flashcardView = document.getElementById('flashcard-view');
         const flashcard = document.getElementById('flashcard');
-        const flipButton = document.getElementById('flip-button');
-        const addCardButton = document.querySelector('.add-card');
-        const cardContainer = document.querySelector('.card-container');
-        
-        // Sample data structure for study sets
-        let currentSet = {
-            title: "",
-            cards: [
-                { term: "", definition: "" },
-                { term: "", definition: "" }
-            ]
-        };
-        
-        let currentCardIndex = 0;
-        
-        // Import modal functionality
-        importButton.addEventListener('click', () => {
-            importModal.style.display = 'flex';
-        });
-        
-        cancelImport.addEventListener('click', () => {
-            importModal.style.display = 'none';
-        });
-        
-        // Close modal when clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target === importModal) {
-                importModal.style.display = 'none';
-            }
-        });
-        
-        // Add card functionality
-        addCardButton.addEventListener('click', () => {
-            const newCard = document.createElement('div');
-            newCard.className = 'card';
-            newCard.innerHTML = `
-                <input type="text" placeholder="Term">
-                <input type="text" placeholder="Definition">
-            `;
-            cardContainer.appendChild(newCard);
-            
-            // Add to data structure
-            currentSet.cards.push({ term: "", definition: "" });
-        });
-        
-        // Create study set functionality
-        createButton.addEventListener('click', () => {
-            // Gather data from inputs
-            currentSet.title = document.querySelector('.set-title').value;
-            
-            const cardElements = document.querySelectorAll('.card');
-            currentSet.cards = [];
-            
-            cardElements.forEach((card, index) => {
-                const inputs = card.querySelectorAll('input');
-                currentSet.cards.push({
-                    term: inputs[0].value,
-                    definition: inputs[1].value
-                });
-            });
-            
-            // Show study modes
-            studyModes.style.display = 'block';
-            
-            // Scroll to study modes
-            studyModes.scrollIntoView({ behavior: 'smooth' });
-        });
-        
-        // Flashcard functionality
-        flashcardButton.addEventListener('click', () => {
-            flashcardView.style.display = 'block';
-            updateFlashcard();
-            
-            // Scroll to flashcard view
-            flashcardView.scrollIntoView({ behavior: 'smooth' });
-        });
-        
-        // Flip flashcard
-        flipButton.addEventListener('click', () => {
-            flashcard.classList.toggle('flipped');
-        });
-        
-        // Previous card
-        document.querySelector('.prev-btn').addEventListener('click', () => {
-            if (currentCardIndex > 0) {
-                currentCardIndex--;
-                updateFlashcard();
-                flashcard.classList.remove('flipped');
-            }
-        });
-        
-        // Next card
-        document.querySelector('.next-btn').addEventListener('click', () => {
-            if (currentCardIndex < currentSet.cards.length - 1) {
-                currentCardIndex++;
-                updateFlashcard();
-                flashcard.classList.remove('flipped');
-            }
-        });
-        
-        // Update flashcard content
-        function updateFlashcard() {
-            const card = currentSet.cards[currentCardIndex];
-            document.querySelector('.flashcard-front').textContent = card.term || "Term";
-            document.querySelector('.flashcard-back').textContent = card.definition || "Definition";
-        }
-        
-        // Import from Quizlet function (mock implementation)
-        document.querySelector('.import-confirm-btn').addEventListener('click', () => {
-            const quizletUrl = document.querySelector('.modal-content input').value;
-            
-            // Mock function - in a real implementation, this would parse the Quizlet data
-            if (quizletUrl) {
-                // This is a mock response - in reality, you would fetch and parse the Quizlet content
-                const mockImportedSet = {
-                    title: "Imported Quizlet Set",
-                    cards: [
-                        { term: "Photosynthesis", definition: "The process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water." },
-                        { term: "Mitochondria", definition: "An organelle found in large numbers in most cells, in which the biochemical processes of respiration and energy production occur." },
-                        { term: "Nucleus", definition: "A central organelle containing the cell's genetic material." },
-                        { term: "Osmosis", definition: "The process by which molecules of a solvent tend to pass through a semipermeable membrane from a less concentrated solution into a more concentrated one." }
-                    ]
-                };
-                
-                // Update the current set with imported data
-                currentSet = mockImportedSet;
-                
-                // Update the UI with the imported data
-                document.querySelector('.set-title').value = currentSet.title;
-                
-                // Clear existing cards
-                cardContainer.innerHTML = '';
-                
-                // Add imported cards to UI
-                currentSet.cards.forEach(card => {
-                    const newCard = document.createElement('div');
-                    newCard.className = 'card';
-                    newCard.innerHTML = `
-                        <input type="text" value="${card.term}" placeholder="Term">
-                        <input type="text" value="${card.definition}" placeholder="Definition">
-                    `;
-                    cardContainer.appendChild(newCard);
-                });
-                
-                // Close the modal
-                importModal.style.display = 'none';
-                
-                // Show success message (could be enhanced)
-                alert("Set imported successfully!");
-            }
-        });
-    </script>
-</body>
-</html>
+        const flipBtn = document.getElementById('flip-btn');
