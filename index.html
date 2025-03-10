@@ -1,4 +1,27 @@
-showToast('warning', 'No Questions Found', `There are no ${selectedType} questions in this set.`);
+if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                        checkWriteAnswer();
+                    }
+                });
+            }
+            
+            // Update document title
+            document.title = `Write: ${studySet.title} | GitHut`;
+            
+            // Prepare cards for writing practice
+            const writeCards = studySet.cards.map(card => ({
+                ...card,
+                answered: false,
+                isCorrect: false
+            }));
+            
+            // Shuffle cards
+            shuffleArray(writeCards);
+            
+            // Set as current write session
+            currentWriteSession = {
+                setId: studySet.id,
+                title: studySet.title,
+                            showToast('warning', 'No Questions Found', `There are no ${selectedType} questions in this set.`);
                 typeSelect.value = 'all';
                 return;
             }
@@ -132,7 +155,558 @@ showToast('warning', 'No Questions Found', `There are no ${selectedType} questio
             
             // Save updated set
             saveStudySet(studySet).catch(error => {
-                console.error('Failed             // If at the end, show summary
+                console.error('Failed to save test results:', error);
+            });
+        }
+        
+        // MATCH MODE IMPLEMENTATION
+        function initMatchMode(studySet) {
+            // Create match mode view if not exists
+            let matchView = document.getElementById('match-view');
+            
+            if (!matchView) {
+                matchView = document.createElement('section');
+                matchView.id = 'match-view';
+                matchView.className = 'flashcard-view';
+                matchView.style.display = 'none';
+                
+                matchView.innerHTML = `
+                    <div class="flashcard-header">
+                        <h2></h2>
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <div id="match-time" style="font-size: 1.2rem; font-weight: 500;">Time: 0:00</div>
+                            <div id="match-score" style="font-size: 1.2rem; font-weight: 500;">Score: 0</div>
+                        </div>
+                    </div>
+                    
+                    <div id="match-intro" style="text-align: center; margin: 3rem 0;">
+                        <h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">Match Game</h3>
+                        <p style="margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                            Match each term with its definition as quickly as possible. 
+                            The faster you match all cards, the higher your score will be!
+                        </p>
+                        <div style="margin-bottom: 2rem;">
+                            <select id="match-difficulty" class="filter-select" style="padding: 0.5rem 1rem; margin-right: 1rem;">
+                                <option value="easy">Easy (6 cards)</option>
+                                <option value="medium" selected>Medium (10 cards)</option>
+                                <option value="hard">Hard (16 cards)</option>
+                            </select>
+                            <button class="btn btn-primary" id="start-match-btn">
+                                <i class="fas fa-play"></i> Start Game
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="match-game-container" style="display: none;">
+                        <div id="match-grid" style="display: grid; gap: 1rem; margin-bottom: 2rem;">
+                            <!-- Match cards will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <div id="match-summary" style="display: none; text-align: center; margin: 3rem 0;">
+                        <h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">Game Complete!</h3>
+                        <div style="background-color: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow-md); max-width: 600px; margin: 0 auto;">
+                            <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem;">
+                                <span id="final-score">0</span> points
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <div>Time: <span id="final-time">0:00</span></div>
+                                <div>Matches: <span id="final-matches">0</span></div>
+                                <div>Attempts: <span id="final-attempts">0</span></div>
+                            </div>
+                            <button class="btn btn-primary" id="play-again-btn">
+                                <i class="fas fa-redo"></i> Play Again
+                            </button>
+                            <button class="btn btn-outline" id="exit-match-btn">
+                                <i class="fas fa-arrow-left"></i> Back to Study Modes
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add to DOM
+                const testView = document.getElementById('test-view');
+                if (testView) {
+                    testView.parentNode.insertBefore(matchView, testView.nextSibling);
+                } else {
+                    const learnView = document.getElementById('learn-view');
+                    if (learnView) {
+                        learnView.parentNode.insertBefore(matchView, learnView.nextSibling);
+                    } else {
+                        flashcardView.parentNode.insertBefore(matchView, flashcardView.nextSibling);
+                    }
+                }
+                
+                // Add event listeners
+                document.getElementById('start-match-btn').addEventListener('click', startMatchGame);
+                document.getElementById('play-again-btn').addEventListener('click', () => initMatchMode(studySet));
+                document.getElementById('exit-match-btn').addEventListener('click', () => {
+                    matchView.style.display = 'none';
+                    studyModes.style.display = 'block';
+                    studyModes.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+            
+            // Update document title
+            document.title = `Match: ${studySet.title} | GitHut`;
+            
+            // Set current study set for match game
+            currentMatchGame = {
+                setId: studySet.id,
+                title: studySet.title,
+                cards: [...studySet.cards],
+                gameState: 'intro',
+                startTime: null,
+                endTime: null,
+                score: 0,
+                matches: 0,
+                attempts: 0,
+                selectedCard: null
+            };
+            
+            // Hide other views
+            flashcardView.style.display = 'none';
+            if (document.getElementById('learn-view')) {
+                document.getElementById('learn-view').style.display = 'none';
+            }
+            if (document.getElementById('test-view')) {
+                document.getElementById('test-view').style.display = 'none';
+            }
+            
+            // Update header
+            matchView.querySelector('.flashcard-header h2').textContent = studySet.title;
+            
+            // Reset UI
+            document.getElementById('match-intro').style.display = 'block';
+            document.getElementById('match-game-container').style.display = 'none';
+            document.getElementById('match-summary').style.display = 'none';
+            
+            // Show match view
+            matchView.style.display = 'block';
+            
+            // Scroll to match view
+            matchView.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Match mode variables
+        let currentMatchGame = null;
+        let matchTimer = null;
+        let matchSeconds = 0;
+        
+        // Function to start match game
+        function startMatchGame() {
+            if (!currentMatchGame) return;
+            
+            // Get difficulty
+            const difficultySelect = document.getElementById('match-difficulty');
+            const difficulty = difficultySelect.value;
+            
+            // Determine number of cards based on difficulty
+            let cardCount;
+            switch (difficulty) {
+                case 'easy': cardCount = 6; break;
+                case 'hard': cardCount = 16; break;
+                default: cardCount = 10; // medium
+            }
+            
+            // Limit to available cards
+            cardCount = Math.min(cardCount, currentMatchGame.cards.length);
+            
+            // Need at least 3 cards to play
+            if (cardCount < 3) {
+                showToast('error', 'Not Enough Cards', 'You need at least 3 cards to play the match game.');
+                return;
+            }
+            
+            // Select random cards
+            const gameCards = [];
+            const shuffledCards = [...currentMatchGame.cards];
+            shuffleArray(shuffledCards);
+            
+            for (let i = 0; i < cardCount; i++) {
+                if (i < shuffledCards.length) {
+                    gameCards.push(shuffledCards[i]);
+                }
+            }
+            
+            // Create match cards (terms and definitions)
+            const matchCards = [];
+            
+            gameCards.forEach(card => {
+                // Add term card
+                matchCards.push({
+                    id: `term-${card.id}`,
+                    cardId: card.id,
+                    type: 'term',
+                    text: card.term,
+                    matched: false
+                });
+                
+                // Add definition card
+                matchCards.push({
+                    id: `def-${card.id}`,
+                    cardId: card.id,
+                    type: 'definition',
+                    text: card.definition,
+                    matched: false
+                });
+            });
+            
+            // Shuffle match cards
+            shuffleArray(matchCards);
+            
+            // Update game state
+            currentMatchGame.gameCards = gameCards;
+            currentMatchGame.matchCards = matchCards;
+            currentMatchGame.gameState = 'playing';
+            currentMatchGame.startTime = new Date();
+            currentMatchGame.score = 0;
+            currentMatchGame.matches = 0;
+            currentMatchGame.attempts = 0;
+            currentMatchGame.selectedCard = null;
+            
+            // Hide intro
+            document.getElementById('match-intro').style.display = 'none';
+            
+            // Create match grid
+            const matchGrid = document.getElementById('match-grid');
+            
+            // Determine grid columns based on card count
+            let gridColumns;
+            if (cardCount <= 6) {
+                gridColumns = 3;
+            } else if (cardCount <= 10) {
+                gridColumns = 4;
+            } else {
+                gridColumns = 4;
+            }
+            
+            matchGrid.style.gridTemplateColumns = `repeat(${gridColumns}, 1fr)`;
+            matchGrid.innerHTML = '';
+            
+            // Create cards
+            matchCards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'match-card';
+                cardElement.setAttribute('data-id', card.id);
+                cardElement.setAttribute('data-card-id', card.cardId);
+                cardElement.setAttribute('data-type', card.type);
+                
+                cardElement.innerHTML = `
+                    <div class="match-card-inner">
+                        <div class="match-card-front">
+                            <i class="fas fa-question"></i>
+                        </div>
+                        <div class="match-card-back">
+                            <div class="match-card-content">${card.text}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Style the card
+                cardElement.style.backgroundColor = 'var(--white)';
+                cardElement.style.borderRadius = 'var(--border-radius)';
+                cardElement.style.height = '120px';
+                cardElement.style.cursor = 'pointer';
+                cardElement.style.perspective = '1000px';
+                cardElement.style.boxShadow = 'var(--shadow-sm)';
+                cardElement.style.transition = 'transform 0.2s, box-shadow 0.2s';
+                
+                cardElement.querySelector('.match-card-inner').style.position = 'relative';
+                cardElement.querySelector('.match-card-inner').style.width = '100%';
+                cardElement.querySelector('.match-card-inner').style.height = '100%';
+                cardElement.querySelector('.match-card-inner').style.transition = 'transform 0.6s';
+                cardElement.querySelector('.match-card-inner').style.transformStyle = 'preserve-3d';
+                
+                cardElement.querySelector('.match-card-front').style.position = 'absolute';
+                cardElement.querySelector('.match-card-front').style.width = '100%';
+                cardElement.querySelector('.match-card-front').style.height = '100%';
+                cardElement.querySelector('.match-card-front').style.backfaceVisibility = 'hidden';
+                cardElement.querySelector('.match-card-front').style.display = 'flex';
+                cardElement.querySelector('.match-card-front').style.alignItems = 'center';
+                cardElement.querySelector('.match-card-front').style.justifyContent = 'center';
+                cardElement.querySelector('.match-card-front').style.color = 'var(--primary)';
+                cardElement.querySelector('.match-card-front').style.fontSize = '2rem';
+                cardElement.querySelector('.match-card-front').style.backgroundColor = 'var(--gray-100)';
+                cardElement.querySelector('.match-card-front').style.borderRadius = 'var(--border-radius)';
+                
+                cardElement.querySelector('.match-card-back').style.position = 'absolute';
+                cardElement.querySelector('.match-card-back').style.width = '100%';
+                cardElement.querySelector('.match-card-back').style.height = '100%';
+                cardElement.querySelector('.match-card-back').style.backfaceVisibility = 'hidden';
+                cardElement.querySelector('.match-card-back').style.transform = 'rotateY(180deg)';
+                cardElement.querySelector('.match-card-back').style.display = 'flex';
+                cardElement.querySelector('.match-card-back').style.alignItems = 'center';
+                cardElement.querySelector('.match-card-back').style.justifyContent = 'center';
+                cardElement.querySelector('.match-card-back').style.padding = '0.5rem';
+                cardElement.querySelector('.match-card-back').style.borderRadius = 'var(--border-radius)';
+                
+                if (card.type === 'term') {
+                    cardElement.querySelector('.match-card-back').style.backgroundColor = 'var(--primary-light)';
+                    cardElement.querySelector('.match-card-back').style.color = 'var(--white)';
+                } else {
+                    cardElement.querySelector('.match-card-back').style.backgroundColor = 'var(--white)';
+                    cardElement.querySelector('.match-card-back').style.color = 'var(--text)';
+                    cardElement.querySelector('.match-card-back').style.border = '1px solid var(--primary-light)';
+                }
+                
+                cardElement.querySelector('.match-card-content').style.fontSize = '0.9rem';
+                cardElement.querySelector('.match-card-content').style.textAlign = 'center';
+                cardElement.querySelector('.match-card-content').style.overflow = 'auto';
+                cardElement.querySelector('.match-card-content').style.maxHeight = '100%';
+                
+                // Add card to grid
+                matchGrid.appendChild(cardElement);
+                
+                // Add click event
+                cardElement.addEventListener('click', () => handleMatchCardClick(cardElement));
+            });
+            
+            // Show game container
+            document.getElementById('match-game-container').style.display = 'block';
+            
+            // Start timer
+            matchSeconds = 0;
+            updateMatchTimer();
+            matchTimer = setInterval(updateMatchTimer, 1000);
+        }
+        
+        // Function to update match timer
+        function updateMatchTimer() {
+            matchSeconds++;
+            const minutes = Math.floor(matchSeconds / 60);
+            const seconds = matchSeconds % 60;
+            document.getElementById('match-time').textContent = `Time: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+        
+        // Function to handle match card click
+        function handleMatchCardClick(cardElement) {
+            if (!currentMatchGame || currentMatchGame.gameState !== 'playing') return;
+            
+            // Get card info
+            const cardId = cardElement.getAttribute('data-id');
+            const matchCard = currentMatchGame.matchCards.find(c => c.id === cardId);
+            
+            // Skip if card is already matched or is the currently selected card
+            if (matchCard.matched || cardId === currentMatchGame.selectedCard?.id) return;
+            
+            // Flip card
+            cardElement.querySelector('.match-card-inner').style.transform = 'rotateY(180deg)';
+            
+            // If no card selected, make this the selected card
+            if (!currentMatchGame.selectedCard) {
+                currentMatchGame.selectedCard = matchCard;
+                return;
+            }
+            
+            // Otherwise, we have two cards selected, check for match
+            currentMatchGame.attempts++;
+            
+            const selectedCard = currentMatchGame.selectedCard;
+            const selectedElement = document.querySelector(`.match-card[data-id="${selectedCard.id}"]`);
+            
+            // Check if cards match (same cardId but different types)
+            if (matchCard.cardId === selectedCard.cardId && matchCard.type !== selectedCard.type) {
+                // Match found!
+                currentMatchGame.matches++;
+                matchCard.matched = true;
+                selectedCard.matched = true;
+                
+                // Update card appearance
+                cardElement.style.boxShadow = '0 0 0 2px var(--success)';
+                selectedElement.style.boxShadow = '0 0 0 2px var(--success)';
+                
+                // Disable matched cards
+                cardElement.style.cursor = 'default';
+                selectedElement.style.cursor = 'default';
+                
+                // Award points (more points for faster matches)
+                const pointsEarned = Math.max(10, 50 - matchSeconds / 10);
+                currentMatchGame.score += Math.floor(pointsEarned);
+                document.getElementById('match-score').textContent = `Score: ${currentMatchGame.score}`;
+                
+                // Check if all matches found
+                if (currentMatchGame.matchCards.every(c => c.matched)) {
+                    endMatchGame();
+                }
+            } else {
+                // No match, flip cards back after delay
+                setTimeout(() => {
+                    cardElement.querySelector('.match-card-inner').style.transform = '';
+                    selectedElement.querySelector('.match-card-inner').style.transform = '';
+                }, 1000);
+                
+                // Deduct points for wrong match
+                currentMatchGame.score = Math.max(0, currentMatchGame.score - 5);
+                document.getElementById('match-score').textContent = `Score: ${currentMatchGame.score}`;
+            }
+            
+            // Reset selected card
+            currentMatchGame.selectedCard = null;
+        }
+        
+        // Function to end match game
+        function endMatchGame() {
+            if (!currentMatchGame) return;
+            
+            // Stop timer
+            clearInterval(matchTimer);
+            currentMatchGame.endTime = new Date();
+            currentMatchGame.gameState = 'ended';
+            
+            // Calculate final score with time bonus
+            const gameDuration = Math.floor((currentMatchGame.endTime - currentMatchGame.startTime) / 1000);
+            const timeBonus = Math.max(0, 300 - gameDuration) * 2;
+            currentMatchGame.score += timeBonus;
+            
+            // Update summary
+            document.getElementById('final-score').textContent = currentMatchGame.score;
+            document.getElementById('final-time').textContent = formatTime(gameDuration);
+            document.getElementById('final-matches').textContent = currentMatchGame.matches;
+            document.getElementById('final-attempts').textContent = currentMatchGame.attempts;
+            
+            // Hide game and show summary
+            setTimeout(() => {
+                document.getElementById('match-game-container').style.display = 'none';
+                document.getElementById('match-summary').style.display = 'block';
+                
+                // Save match results
+                saveMatchResults();
+            }, 1000);
+        }
+        
+        // Function to format time
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+        }
+        
+        // Function to save match results
+        function saveMatchResults() {
+            if (!currentMatchGame) return;
+            
+            // Find original study set
+            const studySet = studySets.find(set => set.id === currentMatchGame.setId);
+            if (!studySet) return;
+            
+            // Create match result record
+            const matchResult = {
+                id: generateId(),
+                timestamp: new Date().toISOString(),
+                score: currentMatchGame.score,
+                duration: Math.floor((currentMatchGame.endTime - currentMatchGame.startTime) / 1000),
+                matches: currentMatchGame.matches,
+                attempts: currentMatchGame.attempts,
+                cardCount: currentMatchGame.gameCards.length
+            };
+            
+            // Add to set history
+            if (!studySet.matchHistory) {
+                studySet.matchHistory = [];
+            }
+            
+            studySet.matchHistory.push(matchResult);
+            
+            // Save updated set
+            saveStudySet(studySet).catch(error => {
+                console.error('Failed to save match results:', error);
+            });
+        }
+        
+        // WRITE MODE IMPLEMENTATION
+        function initWriteMode(studySet) {
+            // Create write mode view if not exists
+            let writeView = document.getElementById('write-view');
+            
+            if (!writeView) {
+                writeView = document.createElement('section');
+                writeView.id = 'write-view';
+                writeView.className = 'flashcard-view';
+                writeView.style.display = 'none';
+                
+                writeView.innerHTML = `
+                    <div class="flashcard-header">
+                        <h2></h2>
+                        <div class="flashcard-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="write-progress-fill"></div>
+                            </div>
+                            <span class="progress-text" id="write-progress-text"></span>
+                        </div>
+                    </div>
+                    
+                    <div id="write-container" style="background-color: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow-md); margin-bottom: 2rem;">
+                        <div id="write-term" style="font-size: 1.5rem; font-weight: 500; margin-bottom: 1.5rem;"></div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="write-answer" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Type the definition:</label>
+                            <textarea id="write-answer" style="width: 100%; padding: 1rem; border: 1px solid var(--gray-300); border-radius: var(--border-radius); min-height: 120px;"></textarea>
+                        </div>
+                        <div id="write-feedback" style="margin-top: 1rem; padding: 1rem; border-radius: var(--border-radius); display: none;">
+                            <div id="write-feedback-message"></div>
+                            <div id="write-correct-answer" style="margin-top: 0.5rem; display: none;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="write-controls" style="display: flex; justify-content: space-between; align-items: center;">
+                        <button class="btn btn-outline" id="write-skip-btn">
+                            <i class="fas fa-forward"></i> Skip
+                        </button>
+                        <button class="btn btn-primary" id="write-check-btn">
+                            <i class="fas fa-check"></i> Check Answer
+                        </button>
+                        <button class="btn btn-primary" id="write-next-btn" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="write-summary" style="display: none; margin-top: 2rem; background-color: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow-md); text-align: center;">
+                        <h3 style="margin-bottom: 1.5rem;">Writing Practice Complete!</h3>
+                        <div style="margin-bottom: 2rem;">
+                            <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;">
+                                <span id="write-score-percentage">0</span>%
+                            </div>
+                            <div style="color: var(--text-light);">
+                                <span id="write-correct-count">0</span> of <span id="write-total-count">0</span> correct
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: center; gap: 1rem;">
+                            <button class="btn btn-primary" id="restart-write-btn">
+                                <i class="fas fa-redo"></i> Practice Again
+                            </button>
+                            <button class="btn btn-outline" id="exit-write-btn">
+                                <i class="fas fa-arrow-left"></i> Back to Study Modes
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add to DOM
+                const matchView = document.getElementById('match-view');
+                if (matchView) {
+                    matchView.parentNode.insertBefore(writeView, matchView.nextSibling);
+                } else {
+                    const testView = document.getElementById('test-view');
+                    if (testView) {
+                        testView.parentNode.insertBefore(writeView, testView.nextSibling);
+                    } else {
+                        flashcardView.parentNode.insertBefore(writeView, flashcardView.nextSibling);
+                    }
+                }
+                
+                // Add event listeners
+                document.getElementById('write-check-btn').addEventListener('click', checkWriteAnswer);
+                document.getElementById('write-next-btn').addEventListener('click', nextWriteCard);
+                document.getElementById('write-skip-btn').addEventListener('click', skipWriteCard);
+                document.getElementById('restart-write-btn').addEventListener('click', () => initWriteMode(studySet));
+                document.getElementById('exit-write-btn').addEventListener('click', () => {
+                    writeView.style.display = 'none';
+                    studyModes.style.display = 'block';
+                    studyModes.scrollIntoView({ behavior: 'smooth' });
+                });
+                
+                // Add enter key event to submit
+                document.getElementById('write-answer').addEventListener('keydown', (e) => {            // If at the end, show summary
             if (currentLearnSession.currentIndex >= currentLearnSession.cards.length - 1) {
                 showLearnSummary();
                 return;
