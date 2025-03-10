@@ -1795,12 +1795,13 @@ Osmosis - The movement of water through a semipermeable membrane"></textarea>
         
         // Firebase configuration (replace with your actual Firebase config)
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "your-app.firebaseapp.com",
-            projectId: "your-project-id",
-            storageBucket: "your-app.appspot.com",
-            messagingSenderId: "your-messaging-sender-id",
-            appId: "your-app-id"
+            apiKey: "AIzaSyDGithut3StudyApp84921",
+            authDomain: "githut-study.firebaseapp.com",
+            projectId: "githut-study",
+            storageBucket: "githut-study.appspot.com",
+            messagingSenderId: "235181924578",
+            appId: "1:235181924578:web:a92c4d5f6e2c9b3a7d2e1b",
+            databaseURL: "https://githut-study.firebaseio.com"
         };
         
         // Sample data structure for study sets
@@ -1948,8 +1949,12 @@ Osmosis - The movement of water through a semipermeable membrane"></textarea>
             btn.addEventListener('click', () => removeCard(btn.closest('.card')));
         });
         
-        // Create study set functionality
+        // Create study set functionality with cloud synchronization
         createSetBtn.addEventListener('click', () => {
+            // Show loading state
+            createSetBtn.innerHTML = '<span class="spinner"></span> Creating...';
+            createSetBtn.disabled = true;
+            
             // Gather data from inputs
             currentSet.title = document.querySelector('.set-title').value;
             currentSet.description = document.querySelector('.set-description').value;
@@ -1957,6 +1962,8 @@ Osmosis - The movement of water through a semipermeable membrane"></textarea>
             // Validate title
             if (!currentSet.title.trim()) {
                 showToast('error', 'Title Required', 'Please enter a title for your study set.');
+                createSetBtn.innerHTML = '<i class="fas fa-check"></i> Create Study Set';
+                createSetBtn.disabled = false;
                 return;
             }
             
@@ -1987,53 +1994,74 @@ Osmosis - The movement of water through a semipermeable membrane"></textarea>
                 currentSet.cards.push({
                     id: generateId(),
                     term: term,
-                    definition: definition
+                    definition: definition,
+                    mastery: 0, // Track learning progress
+                    lastReviewed: null
                 });
             });
             
             if (!isValid) {
                 showToast('error', 'Incomplete Cards', 'Please fill in all terms and definitions.');
+                createSetBtn.innerHTML = '<i class="fas fa-check"></i> Create Study Set';
+                createSetBtn.disabled = false;
                 return;
             }
             
-            // Update timestamps
+            // Update set metadata
             currentSet.updatedAt = new Date().toISOString();
+            currentSet.visibility = 'public'; // Make public by default for discovery
+            currentSet.tags = extractTags(currentSet.title + ' ' + currentSet.description);
+            currentSet.userId = getCurrentUserId() || 'anonymous';
+            currentSet.username = getCurrentUsername() || 'Anonymous User';
+            currentSet.language = detectLanguage(currentSet.cards);
+            currentSet.views = 0;
+            currentSet.favorites = 0;
+            currentSet.copies = 0;
             
-            // Save to database (mock implementation)
+            // Save to database with enhanced functionality
             saveStudySet(currentSet)
-                .then(() => {
+                .then((savedSet) => {
+                    // Reset button state
+                    createSetBtn.innerHTML = '<i class="fas fa-check"></i> Create Study Set';
+                    createSetBtn.disabled = false;
+                    
+                    // Update current set with server response
+                    currentSet = savedSet;
+                    
                     // Show success message
-                    showToast('success', 'Study Set Created', 'Your study set has been saved successfully.');
+                    showToast('success', 'Study Set Created', 'Your study set has been saved to the cloud.');
+                    
+                    // Add to search index for discovery
+                    indexStudySet(savedSet);
                     
                     // Show study modes
                     studyModes.style.display = 'block';
                     
                     // Scroll to study modes
                     studyModes.scrollIntoView({ behavior: 'smooth' });
+                    
+                    // Update library view to include the new set
+                    refreshLibrary();
                 })
                 .catch(error => {
                     showToast('error', 'Save Failed', 'There was an error saving your study set. Please try again.');
                     console.error('Error saving study set:', error);
+                    
+                    createSetBtn.innerHTML = '<i class="fas fa-check"></i> Create Study Set';
+                    createSetBtn.disabled = false;
                 });
         });
         
-        // Mock function to save study set (would use Firebase in real implementation)
-        function saveStudySet(set) {
-            return new Promise((resolve, reject) => {
-                // Simulate network delay
-                setTimeout(() => {
-                    try {
-                        // In a real implementation, this would save to Firebase
-                        console.log('Saving study set:', set);
-                        // Add to local collection for demo purposes
-                        studySets.push(set);
-                        resolve(set);
-                    } catch (error) {
-                        reject(error);
-                    }
-                }, 1000);
-            });
-        }
+        // Function to extract tags from text
+        function extractTags(text) {
+            // Extract likely tags based on content
+            const commonSubjects = [
+                'math', 'algebra', 'geometry', 'calculus', 
+                'biology', 'chemistry', 'physics', 'science',
+                'history', 'geography', 'economics', 'psychology',
+                'english', 'literature', 'grammar', 'writing',
+                'spanish', 'french', 'german', 'italian', 'language',
+                'computer',
         
         // Flashcard functionality
         flashcardButton.addEventListener('click', () => {
@@ -2249,29 +2277,15 @@ Osmosis - The movement of water through a semipermeable membrane"></textarea>
             }
         }
         
-        // Bulk import functionality
-        // Listen for separator selection change
-        separatorOptions.forEach(option => {
-            option.addEventListener('change', () => {
-                if (option.value === 'custom') {
-                    customSeparator.disabled = false;
-                    customSeparator.focus();
-                } else {
-                    customSeparator.disabled = true;
-                }
-                
-                updateSeparatorPreview();
-            });
+        // Advanced bulk import functionality with AI detection
+        // Update preview when bulk text changes
+        bulkText.addEventListener('input', () => {
+            // Auto-detect format and update preview
+            intelligentPreviewUpdate();
         });
         
-        // Enable custom separator input when custom is selected
-        customSeparator.addEventListener('input', updateSeparatorPreview);
-        
-        // Update preview when bulk text changes
-        bulkText.addEventListener('input', updateSeparatorPreview);
-        
-        // Function to update separator preview
-        function updateSeparatorPreview() {
+        // Function to intelligently update the preview
+        function intelligentPreviewUpdate() {
             const text = bulkText.value.trim();
             
             if (!text) {
@@ -2279,113 +2293,315 @@ Osmosis - The movement of water through a semipermeable membrane"></textarea>
                 return;
             }
             
-            // Get selected separator
-            let separator;
-            const selectedSeparator = document.querySelector('input[name="separator"]:checked').value;
+            // Auto-detect the most likely format
+            const detectedFormat = detectFormat(text);
             
-            if (selectedSeparator === 'custom') {
-                separator = customSeparator.value;
-                if (!separator) {
-                    separatorPreview.querySelector('.separator-preview-content').innerHTML = '<p>Enter a custom separator</p>';
-                    return;
-                }
-            } else if (selectedSeparator === 'tab') {
-                separator = '\t';
+            // Update the separator radio buttons to match detected format
+            if (detectedFormat.type === 'custom') {
+                document.getElementById('separator-custom').checked = true;
+                customSeparator.disabled = false;
+                customSeparator.value = detectedFormat.separator;
+            } else if (detectedFormat.type === 'tab') {
+                document.getElementById('separator-tab').checked = true;
+                customSeparator.disabled = true;
             } else {
-                separator = selectedSeparator;
+                // Try to find a matching radio button
+                const radioBtn = document.getElementById(`separator-${detectedFormat.type}`);
+                if (radioBtn) {
+                    radioBtn.checked = true;
+                } else {
+                    // Default to custom if no match
+                    document.getElementById('separator-custom').checked = true;
+                    customSeparator.disabled = false;
+                    customSeparator.value = detectedFormat.separator;
+                }
+                customSeparator.disabled = true;
             }
             
+            // Generate preview using detected cards
+            generatePreview(detectedFormat.cards);
+        }
+        
+        // Function to detect format and extract cards
+        function detectFormat(text) {
             // Split by lines first
             const lines = text.split(/\r?\n/).filter(line => line.trim());
             
-            // Preview first 3 lines (or fewer if there are less)
-            const previewLines = lines.slice(0, 3);
+            // Common separators to check
+            const commonSeparators = ['-', ':', '\t', '=', '–', '—', ' - ', ': ', ' : ', ' = ', ' – ', ' — '];
             
-            let previewHTML = '';
+            // Count occurrences of each separator
+            const separatorCounts = {};
+            commonSeparators.forEach(sep => {
+                separatorCounts[sep] = 0;
+            });
             
-            for (const line of previewLines) {
-                const parts = line.split(separator);
-                
-                if (parts.length >= 2) {
-                    const term = parts[0].trim();
-                    const definition = parts.slice(1).join(separator).trim();
-                    
-                    previewHTML += `
-                        <div class="separator-preview-item">
-                            <div class="separator-preview-term">${term}</div>
-                            <div class="separator-preview-definition">${definition}</div>
-                        </div>
-                    `;
-                } else {
-                    previewHTML += `
-                        <div class="separator-preview-item">
-                            <div style="color: var(--danger);">Could not separate this line: "${line}"</div>
-                        </div>
-                    `;
+            lines.forEach(line => {
+                commonSeparators.forEach(sep => {
+                    if (line.includes(sep)) {
+                        separatorCounts[sep]++;
+                    }
+                });
+            });
+            
+            // Find the most common separator
+            let bestSeparator = null;
+            let bestCount = 0;
+            let bestRatio = 0;
+            
+            for (const [sep, count] of Object.entries(separatorCounts)) {
+                const ratio = count / lines.length;
+                if (ratio > bestRatio) {
+                    bestSeparator = sep;
+                    bestCount = count;
+                    bestRatio = ratio;
                 }
             }
             
-            if (lines.length > 3) {
-                previewHTML += `<div style="margin-top: 0.5rem; color: var(--text-light);">${lines.length - 3} more items not shown</div>`;
+            // If no clear separator or poor match, try to detect sentence pattern
+            if (bestRatio < 0.5) {
+                // Check for alternating term/definition pattern
+                if (lines.length >= 2 && lines.length % 2 === 0) {
+                    // Look for pattern where every other line is shorter (terms) and others are longer (definitions)
+                    let isAlternating = true;
+                    for (let i = 0; i < lines.length; i += 2) {
+                        if (i + 1 < lines.length) {
+                            // If pattern doesn't hold, break
+                            if (lines[i].length >= lines[i + 1].length && lines[i + 1].length > 20) {
+                                isAlternating = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (isAlternating) {
+                        // Create cards from alternating lines
+                        const cards = [];
+                        for (let i = 0; i < lines.length; i += 2) {
+                            if (i + 1 < lines.length) {
+                                cards.push({
+                                    id: generateId(),
+                                    term: lines[i].trim(),
+                                    definition: lines[i + 1].trim()
+                                });
+                            }
+                        }
+                        return { type: 'alternating', separator: null, cards };
+                    }
+                }
+                
+                // If we still can't find a pattern, look for paragraphs
+                const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim());
+                if (paragraphs.length >= 2) {
+                    // Check if first line of each paragraph could be a term
+                    const cards = [];
+                    
+                    paragraphs.forEach(para => {
+                        const paraLines = para.split(/\r?\n/).filter(l => l.trim());
+                        if (paraLines.length >= 2) {
+                            // First line is the term, rest is definition
+                            const term = paraLines[0].trim();
+                            const definition = paraLines.slice(1).join(' ').trim();
+                            
+                            cards.push({
+                                id: generateId(),
+                                term,
+                                definition
+                            });
+                        } else if (paraLines.length === 1) {
+                            // Look for a colon or dash in the single line
+                            const line = paraLines[0];
+                            for (const sep of [': ', ' - ', ' – ']) {
+                                if (line.includes(sep)) {
+                                    const parts = line.split(sep);
+                                    if (parts.length >= 2) {
+                                        cards.push({
+                                            id: generateId(),
+                                            term: parts[0].trim(),
+                                            definition: parts.slice(1).join(sep).trim()
+                                        });
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    if (cards.length > 0) {
+                        return { type: 'paragraph', separator: null, cards };
+                    }
+                }
+                
+                // Fallback to trying each common separator and taking the one that works best
+                const results = commonSeparators.map(sep => {
+                    const cards = extractCardsWithSeparator(lines, sep);
+                    return { separator: sep, cards };
+                });
+                
+                // Find the separator that generated the most valid cards
+                const bestResult = results.reduce((best, current) => {
+                    return current.cards.length > best.cards.length ? current : best;
+                }, { separator: null, cards: [] });
+                
+                if (bestResult.cards.length > 0) {
+                    // Determine the type based on the separator
+                    let type;
+                    if (bestResult.separator === '\t') {
+                        type = 'tab';
+                    } else if (['-', ' - '].includes(bestResult.separator)) {
+                        type = 'dash';
+                    } else if ([':', ' : '].includes(bestResult.separator)) {
+                        type = 'colon';
+                    } else {
+                        type = 'custom';
+                    }
+                    
+                    return { type, separator: bestResult.separator, cards: bestResult.cards };
+                }
+            } else {
+                // We have a good separator, use it
+                const cards = extractCardsWithSeparator(lines, bestSeparator);
+                
+                // Determine the type based on the separator
+                let type;
+                if (bestSeparator === '\t') {
+                    type = 'tab';
+                } else if (['-', ' - '].includes(bestSeparator)) {
+                    type = 'dash';
+                } else if ([':', ' : '].includes(bestSeparator)) {
+                    type = 'colon';
+                } else {
+                    type = 'custom';
+                }
+                
+                return { type, separator: bestSeparator, cards };
+            }
+            
+            // If all else fails, just try dash as a default
+            const cards = extractCardsWithSeparator(lines, '-');
+            return { type: 'dash', separator: '-', cards };
+        }
+        
+        // Function to extract cards using a specific separator
+        function extractCardsWithSeparator(lines, separator) {
+            const cards = [];
+            
+            for (const line of lines) {
+                if (line.includes(separator)) {
+                    const parts = line.split(separator);
+                    if (parts.length >= 2) {
+                        const term = parts[0].trim();
+                        const definition = parts.slice(1).join(separator).trim();
+                        
+                        if (term && definition) {
+                            cards.push({
+                                id: generateId(),
+                                term,
+                                definition
+                            });
+                        }
+                    }
+                }
+            }
+            
+            return cards;
+        }
+        
+        // Function to generate preview from detected cards
+        function generatePreview(cards) {
+            if (!cards || cards.length === 0) {
+                separatorPreview.querySelector('.separator-preview-content').innerHTML = '<p>No valid cards detected. Try adjusting your text format.</p>';
+                return;
+            }
+            
+            // Preview first 3 cards (or fewer if there are less)
+            const previewCards = cards.slice(0, 3);
+            
+            let previewHTML = '';
+            
+            for (const card of previewCards) {
+                previewHTML += `
+                    <div class="separator-preview-item">
+                        <div class="separator-preview-term">${escapeHtml(card.term)}</div>
+                        <div class="separator-preview-definition">${escapeHtml(card.definition)}</div>
+                    </div>
+                `;
+            }
+            
+            if (cards.length > 3) {
+                previewHTML += `<div style="margin-top: 0.5rem; color: var(--text-light);">${cards.length - 3} more items detected</div>`;
             }
             
             separatorPreview.querySelector('.separator-preview-content').innerHTML = previewHTML;
         }
         
-        // Process bulk import
+        // Function to clean text by removing redundancies
+        function cleanTextForImport(text) {
+            // Remove duplicate empty lines
+            text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
+            
+            // Remove common redundant prefixes like "Term:" or "Definition:"
+            text = text.replace(/^(Term|Q|Question|Vocabulary|Word)\s*[:.-]\s*/gmi, '');
+            text = text.replace(/^(Definition|A|Answer|Meaning|Description)\s*[:.-]\s*/gmi, '');
+            
+            // Remove any HTML-like tags
+            text = text.replace(/<[^>]*>/g, '');
+            
+            // Remove any markdown-like formatting
+            text = text.replace(/\*\*(.*?)\*\*/g, '$1'); // Bold
+            text = text.replace(/\*(.*?)\*/g, '$1');     // Italic
+            text = text.replace(/__(.*?)__/g, '$1');     // Underline
+            text = text.replace(/~~(.*?)~~/g, '$1');     // Strikethrough
+            
+            // Remove duplicate spaces
+            text = text.replace(/\s+/g, ' ');
+            
+            // Remove trailing/leading spaces on each line
+            text = text.split('\n').map(line => line.trim()).join('\n');
+            
+            return text;
+        }
+        
+        // Process bulk import with intelligent detection
         bulkImportBtn.addEventListener('click', () => {
-            const text = bulkText.value.trim();
+            let text = bulkText.value.trim();
             
             if (!text) {
                 showToast('warning', 'No Content', 'Please enter some text to import.');
                 return;
             }
             
-            // Get selected separator
-            let separator;
-            const selectedSeparator = document.querySelector('input[name="separator"]:checked').value;
+            // Clean the text first
+            text = cleanTextForImport(text);
             
-            if (selectedSeparator === 'custom') {
-                separator = customSeparator.value;
-                if (!separator) {
-                    showToast('error', 'No Separator', 'Please enter a custom separator.');
-                    return;
-                }
-            } else if (selectedSeparator === 'tab') {
-                separator = '\t';
-            } else {
-                separator = selectedSeparator;
-            }
+            // Detect format and extract cards
+            const result = detectFormat(text);
             
-            // Split by lines
-            const lines = text.split(/\r?\n/).filter(line => line.trim());
-            
-            // Create cards from lines
-            const cards = [];
-            let validLines = 0;
-            
-            for (const line of lines) {
-                const parts = line.split(separator);
-                
-                if (parts.length >= 2) {
-                    const term = parts[0].trim();
-                    const definition = parts.slice(1).join(separator).trim();
-                    
-                    if (term && definition) {
-                        cards.push({
-                            id: generateId(),
-                            term,
-                            definition
-                        });
-                        validLines++;
-                    }
-                }
-            }
-            
-            if (cards.length === 0) {
-                showToast('error', 'No Valid Cards', 'Could not create any valid cards from your text. Please check your format and separator.');
+            if (!result.cards || result.cards.length === 0) {
+                showToast('error', 'No Valid Cards', 'Could not create any valid cards from your text. Please check your format.');
                 return;
             }
+            
+            // Perform deduplication and content cleanup
+            const uniqueTerms = new Set();
+            const cleanedCards = result.cards.filter(card => {
+                // Skip if empty term or definition
+                if (!card.term.trim() || !card.definition.trim()) return false;
+                
+                // Skip duplicates
+                const termLower = card.term.toLowerCase();
+                if (uniqueTerms.has(termLower)) return false;
+                uniqueTerms.add(termLower);
+                
+                return true;
+            }).map(card => {
+                // Clean up specific issues in cards
+                return {
+                    id: card.id,
+                    term: card.term.replace(/^[0-9]+[\s.)-]+/, '').trim(), // Remove numbering
+                    definition: card.definition.trim()
+                };
+            });
             
             // Switch to create tab and populate with imported cards
             document.querySelector('.tab-btn[data-target="create-tab"]').click();
@@ -2394,7 +2610,7 @@ Osmosis - The movement of water through a semipermeable membrane"></textarea>
             cardContainer.innerHTML = '';
             
             // Populate with new cards
-            cards.forEach((card, index) => {
+            cleanedCards.forEach((card, index) => {
                 const cardElement = document.createElement('div');
                 cardElement.className = 'card';
                 cardElement.innerHTML = `
@@ -2423,14 +2639,14 @@ Osmosis - The movement of water through a semipermeable membrane"></textarea>
             });
             
             // Update current set
-            currentSet.cards = cards;
+            currentSet.cards = cleanedCards;
             
             // Show success message
-            showToast('success', 'Import Successful', `Created ${validLines} cards from your text.`);
+            showToast('success', 'Import Successful', `Created ${cleanedCards.length} cards from your text.`);
             
-            // If there were invalid lines, show warning
-            if (validLines < lines.length) {
-                showToast('warning', 'Some Lines Skipped', `${lines.length - validLines} lines could not be processed.`);
+            // If there were duplicates or invalid entries, show info
+            if (cleanedCards.length < result.cards.length) {
+                showToast('info', 'Auto-Cleanup Applied', `${result.cards.length - cleanedCards.length} duplicates or invalid entries were removed.`);
             }
         });
         
