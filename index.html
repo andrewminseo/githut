@@ -1,1998 +1,4 @@
-termLower);
-                
-                return true;
-            }).map(card => {
-                // Clean up specific issues in cards
-                return {
-                    id: card.id,
-                    term: card.term.replace(/^[0-9]+[\s.)-]+/, '').trim(), // Remove numbering
-                    definition: card.definition.trim()
-                };
-            });
-            
-            // Switch to create tab and populate with imported cards
-            document.querySelector('.tab-btn[data-target="create-tab"]').click();
-            
-            // Clear existing cards
-            cardContainer.innerHTML = '';
-            
-            // Populate with new cards
-            cleanedCards.forEach((card, index) => {
-                const cardElement = document.createElement('div');
-                cardElement.className = 'card';
-                cardElement.innerHTML = `
-                    <div class="card-number">${index + 1}</div>
-                    <div class="card-input-group">
-                        <input type="text" placeholder="Term" value="${escapeHtml(card.term)}">
-                        <div class="card-tools">
-                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
-                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
-                        </div>
-                    </div>
-                    <div class="card-input-group">
-                        <textarea placeholder="Definition">${escapeHtml(card.definition)}</textarea>
-                        <div class="card-tools">
-                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
-                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
-                        </div>
-                    </div>
-                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
-                `;
-                cardContainer.appendChild(cardElement);
-                
-                // Add event listener to remove button
-                const removeBtn = cardElement.querySelector('.remove-card-btn');
-                removeBtn.addEventListener('click', () => removeCard(cardElement));
-            });
-            
-            // Update current set
-            currentSet.cards = cleanedCards;
-            
-            // Show success message
-            showToast('success', 'Import Successful', `Created ${cleanedCards.length} cards from your text.`);
-            
-            // If there were duplicates or invalid entries, show info
-            if (cleanedCards.length < result.cards.length) {
-                showToast('info', 'Auto-Cleanup Applied', `${result.cards.length - cleanedCards.length} duplicates or invalid entries were removed.`);
-            }
-        });
-        
-        // Enable custom separator input when custom is selected
-        separatorOptions.forEach(option => {
-            option.addEventListener('change', () => {
-                if (option.value === 'custom') {
-                    customSeparator.disabled = false;
-                    customSeparator.focus();
-                } else {
-                    customSeparator.disabled = true;
-                }
-                
-                intelligentPreviewUpdate();
-            });
-        });
-        
-        // Import from Quizlet functionality (mock implementation)
-        quizletImportBtn.addEventListener('click', () => {
-            const quizletUrl = document.querySelector('#import-tab input').value.trim();
-            
-            if (!quizletUrl) {
-                showToast('warning', 'No URL', 'Please enter a Quizlet URL to import.');
-                return;
-            }
-            
-            // Show loading state
-            quizletImportBtn.innerHTML = '<span class="spinner"></span> Importing...';
-            quizletImportBtn.disabled = true;
-            
-            // Simulate import process
-            setTimeout(() => {
-                // This is a mock implementation - in reality, you would fetch and parse the Quizlet content
-                const mockImportedSet = {
-                    title: "Imported Quizlet Set",
-                    description: "Imported from Quizlet",
-                    cards: [
-                        { id: generateId(), term: "Photosynthesis", definition: "The process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water." },
-                        { id: generateId(), term: "Mitochondria", definition: "An organelle found in large numbers in most cells, in which the biochemical processes of respiration and energy production occur." },
-                        { id: generateId(), term: "Nucleus", definition: "A central organelle containing the cell's genetic material." },
-                        { id: generateId(), term: "Osmosis", definition: "The process by which molecules of a solvent tend to pass through a semipermeable membrane from a less concentrated solution into a more concentrated one." }
-                    ]
-                };
-                
-                // Switch to create tab
-                document.querySelector('.tab-btn[data-target="create-tab"]').click();
-                
-                // Update the current set with imported data
-                currentSet.title = mockImportedSet.title;
-                currentSet.description = mockImportedSet.description;
-                currentSet.cards = mockImportedSet.cards;
-                
-                // Update the UI with the imported data
-                document.querySelector('.set-title').value = currentSet.title;
-                document.querySelector('.set-description').value = currentSet.description;
-                
-                // Clear existing cards
-                cardContainer.innerHTML = '';
-                
-                // Add imported cards to UI
-                currentSet.cards.forEach((card, index) => {
-                    const cardElement = document.createElement('div');
-                    cardElement.className = 'card';
-                    cardElement.innerHTML = `
-                        <div class="card-number">${index + 1}</div>
-                        <div class="card-input-group">
-                            <input type="text" placeholder="Term" value="${escapeHtml(card.term)}">
-                            <div class="card-tools">
-                                <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
-                                <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
-                            </div>
-                        </div>
-                        <div class="card-input-group">
-                            <textarea placeholder="Definition">${escapeHtml(card.definition)}</textarea>
-                            <div class="card-tools">
-                                <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
-                                <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
-                            </div>
-                        </div>
-                        <button class="remove-card-btn"><i class="fas fa-times"></i></button>
-                    `;
-                    cardContainer.appendChild(cardElement);
-                    
-                    // Add event listener to remove button
-                    const removeBtn = cardElement.querySelector('.remove-card-btn');
-                    removeBtn.addEventListener('click', () => removeCard(cardElement));
-                });
-                
-                // Reset button
-                quizletImportBtn.innerHTML = '<i class="fas fa-file-import"></i> Import from Quizlet';
-                quizletImportBtn.disabled = false;
-                
-                // Show success message
-                showToast('success', 'Import Successful', 'Quizlet set imported successfully.');
-            }, 2000);
-        });
-        
-        // Flashcard functionality
-        flashcardButton.addEventListener('click', () => {
-            initFlashcardMode(currentSet);
-        });
-        
-        // Flashcard mode implementation
-        function initFlashcardMode(studySet) {
-            if (!studySet || !studySet.cards || studySet.cards.length === 0) {
-                showToast('error', 'Empty Study Set', 'This study set has no cards to study.');
-                return;
-            }
-            
-            // Update document title
-            document.title = `Flashcards: ${studySet.title} | GitHut`;
-            
-            // Reset current card index
-            currentCardIndex = 0;
-            
-            // Show flashcard view
-            flashcardView.style.display = 'block';
-            
-            // Update header
-            document.querySelector('.flashcard-header h2').textContent = studySet.title;
-            
-            // Update flashcard content
-            updateFlashcard();
-            updateProgress();
-            
-            // Scroll to flashcard view
-            flashcardView.scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        // Flip flashcard
-        flipBtn.addEventListener('click', () => {
-            flashcard.classList.toggle('flipped');
-        });
-        
-        // Click on flashcard to flip
-        flashcard.addEventListener('click', () => {
-            flashcard.classList.toggle('flipped');
-        });
-        
-        // Previous card
-        prevBtn.addEventListener('click', () => {
-            if (currentCardIndex > 0) {
-                currentCardIndex--;
-                updateFlashcard();
-                updateProgress();
-                flashcard.classList.remove('flipped');
-            }
-        });
-        
-        // Next card
-        nextBtn.addEventListener('click', () => {
-            if (currentCardIndex < currentSet.cards.length - 1) {
-                currentCardIndex++;
-                updateFlashcard();
-                updateProgress();
-                flashcard.classList.remove('flipped');
-            } else {
-                // If at the end, show completion message
-                showToast('success', 'Set Complete', 'You have reviewed all cards in this set!');
-            }
-        });
-        
-        // Update flashcard content
-        function updateFlashcard() {
-            const card = currentSet.cards[currentCardIndex];
-            const frontContent = document.querySelector('.flashcard-front .card-content');
-            const backContent = document.querySelector('.flashcard-back .card-content');
-            
-            frontContent.textContent = card.term || "Term";
-            backContent.textContent = card.definition || "Definition";
-            
-            // Update navigation buttons
-            prevBtn.disabled = currentCardIndex === 0;
-            nextBtn.disabled = currentCardIndex === currentSet.cards.length - 1;
-            
-            if (prevBtn.disabled) {
-                prevBtn.classList.add('btn-outline');
-                prevBtn.classList.remove('btn-primary');
-            } else {
-                prevBtn.classList.remove('btn-outline');
-                prevBtn.classList.add('btn-primary');
-            }
-        }
-        
-        // Update progress indicator
-        function updateProgress() {
-            const total = currentSet.cards.length;
-            const current = currentCardIndex + 1;
-            const percentage = (current / total) * 100;
-            
-            progressFill.style.width = `${percentage}%`;
-            progressText.textContent = `Card ${current} of ${total}`;
-        }
-        
-        // Mode selection event listeners
-        const modeButtons = document.querySelectorAll('.mode-btn');
-        modeButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const mode = btn.querySelector('h4').textContent.toLowerCase();
-                startStudyMode(mode, currentSet);
-            });
-        });
-        
-        // Modal functionality
-        loginBtn.addEventListener('click', () => {
-            loginModal.classList.add('show');
-        });
-        
-        signupBtn.addEventListener('click', () => {
-            signupModal.classList.add('show');
-        });
-        
-        [closeLoginModal, cancelLogin].forEach(element => {
-            element.addEventListener('click', () => {
-                loginModal.classList.remove('show');
-            });
-        });
-        
-        [closeSignupModal, cancelSignup].forEach(element => {
-            element.addEventListener('click', () => {
-                signupModal.classList.remove('show');
-            });
-        });
-        
-        // Close modals when clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target === loginModal) {
-                loginModal.classList.remove('show');
-            }
-            if (e.target === signupModal) {
-                signupModal.classList.remove('show');
-            }
-        });
-        
-        // Mock login functionality
-        submitLogin.addEventListener('click', () => {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            
-            if (!email || !password) {
-                showToast('error', 'Missing Fields', 'Please fill in all required fields.');
-                return;
-            }
-            
-            // Show loading state
-            submitLogin.innerHTML = '<span class="spinner"></span>';
-            submitLogin.disabled = true;
-            
-            // Simulate authentication
-            setTimeout(() => {
-                // In a real app, this would use Firebase Authentication
-                showToast('success', 'Logged In', 'You have been successfully logged in.');
-                loginModal.classList.remove('show');
-                
-                // Reset form and button
-                document.getElementById('login-form').reset();
-                submitLogin.innerHTML = 'Log In';
-                submitLogin.disabled = false;
-                
-                // Update UI to show logged in state
-                updateAuthUI(true, { name: 'Demo User' });
-            }, 1500);
-        });
-        
-        // Mock signup functionality
-        submitSignup.addEventListener('click', () => {
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            const confirm = document.getElementById('signup-confirm').value;
-            const terms = document.getElementById('terms').checked;
-            
-            if (!name || !email || !password || !confirm) {
-                showToast('error', 'Missing Fields', 'Please fill in all required fields.');
-                return;
-            }
-            
-            if (password !== confirm) {
-                showToast('error', 'Password Mismatch', 'Passwords do not match.');
-                return;
-            }
-            
-            if (!terms) {
-                showToast('error', 'Terms Required', 'You must agree to the Terms of Service.');
-                return;
-            }
-            
-            // Show loading state
-            submitSignup.innerHTML = '<span class="spinner"></span>';
-            submitSignup.disabled = true;
-            
-            // Simulate registration
-            setTimeout(() => {
-                // In a real app, this would use Firebase Authentication
-                showToast('success', 'Account Created', 'Your account has been successfully created.');
-                signupModal.classList.remove('show');
-                
-                // Reset form and button
-                document.getElementById('signup-form').reset();
-                submitSignup.innerHTML = 'Sign Up';
-                submitSignup.disabled = false;
-                
-                // Update UI to show logged in state
-                updateAuthUI(true, { name: name });
-            }, 1500);
-        });
-        
-        // Update UI based on authentication state
-        function updateAuthUI(isLoggedIn, user) {
-            const authButtons = document.querySelector('.auth-buttons');
-            
-            if (isLoggedIn && user) {
-                authButtons.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div style="font-weight: 500;">Welcome, ${user.name}</div>
-                        <button class="btn btn-outline" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Log Out</button>
-                    </div>
-                `;
-                
-                // Add logout event listener
-                document.getElementById('logout-btn').addEventListener('click', () => {
-                    // In a real app, this would use Firebase Authentication
-                    showToast('success', 'Logged Out', 'You have been successfully logged out.');
-                    updateAuthUI(false);
-                });
-            } else {
-                authButtons.innerHTML = `
-                    <button class="btn btn-outline" id="login-btn"><i class="fas fa-sign-in-alt"></i> Log In</button>
-                    <button class="btn btn-primary" id="signup-btn"><i class="fas fa-user-plus"></i> Sign Up</button>
-                `;
-                
-                // Re-add event listeners
-                document.getElementById('login-btn').addEventListener('click', () => {
-                    loginModal.classList.add('show');
-                });
-                
-                document.getElementById('signup-btn').addEventListener('click', () => {
-                    signupModal.classList.add('show');
-                });
-            }
-        }
-        
-        // Placeholder for spaced repetition learning mode
-        function startStudyMode(mode, studySet) {
-            if (!studySet || !studySet.cards || studySet.cards.length === 0) {
-                showToast('error', 'Empty Study Set', 'This study set has no cards to study.');
-                return;
-            }
-            
-            // Track that the user viewed this set
-            addToRecentlyViewed(studySet.id);
-            
-            // Update view count
-            studySet.views = (studySet.views || 0) + 1;
-            
-            // Based on mode, initialize appropriate view
-            switch (mode.toLowerCase()) {
-                case 'flashcards':
-                    initFlashcardMode(studySet);
-                    break;
-                case 'learn':
-                case 'test':
-                case 'match':
-                case 'write':
-                case 'spell':
-                    // These modes would be implemented similarly to flashcard mode
-                    // For now, just show information
-                    showToast('info', 'Coming Soon', `${mode} mode will be available soon!`);
-                    break;
-                default:
-                    initFlashcardMode(studySet);
-            }
-        }
-        
-        // Function to add a set to recently viewed
-        function addToRecentlyViewed(setId) {
-            const recentIds = JSON.parse(localStorage.getItem('githut_recent') || '[]');
-            
-            // Remove if already exists (to move to front)
-            const index = recentIds.indexOf(setId);
-            if (index !== -1) {
-                recentIds.splice(index, 1);
-            }
-            
-            // Add to front
-            recentIds.unshift(setId);
-            
-            // Limit to 10 recent sets
-            const limitedIds = recentIds.slice(0, 10);
-            
-            // Save to localStorage
-            localStorage.setItem('githut_recent', JSON.stringify(limitedIds));
-        }
-        
-        // Function to show toast notifications
-        function showToast(type, title, message) {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            let icon;
-            switch(type) {
-                case 'success':
-                    icon = 'check';
-                    break;
-                case 'error':
-                    icon = 'times';
-                    break;
-                case 'warning':
-                    icon = 'exclamation';
-                    break;
-                default:
-                    icon = 'info';
-            }
-            
-            toast.innerHTML = `
-                <div class="toast-icon"><i class="fas fa-${icon}"></i></div>
-                <div class="toast-content">
-                    <div class="toast-title">${title}</div>
-                    <div class="toast-message">${message}</div>
-                </div>
-                <button class="toast-close"><i class="fas fa-times"></i></button>
-            `;
-            
-            toastContainer.appendChild(toast);
-            
-            // Add event listener to close button
-            toast.querySelector('.toast-close').addEventListener('click', () => {
-                toast.style.animation = 'slideOut 0.3s forwards';
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
-            });
-            
-            // Auto close after 5 seconds
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.style.animation = 'slideOut 0.3s forwards';
-                    setTimeout(() => {
-                        toast.remove();
-                    }, 300);
-                }
-            }, 5000);
-        }
-        
-        // Helper function to generate IDs
-        function generateId() {
-            return Math.random().toString(36).substr(2, 9);
-        }
-        
-        // Helper function to escape HTML
-        function escapeHtml(unsafe) {
-            return unsafe
-                 .replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
-        }
-        
-        // Initialize database (Firebase in real implementation)
-        function initializeDatabase() {
-            // In a real implementation, this would initialize Firebase
-            console.log('Database initialized');
-        }
-        
-        // Document ready function
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize the application
-            initializeDatabase();
-            
-            // Check for URL parameters (shared sets)
-            const urlParams = new URLSearchParams(window.location.search);
-            const sharedSetId = urlParams.get('set');
-            
-            if (sharedSetId) {
-                // Load shared set
-                const set = studySets.find(s => s.id === sharedSetId);
-                
-                if (set) {
-                    // Open the shared set
-                    currentSet = { ...set };
-                    showToast('success', 'Set Loaded', `The study set "${set.title}" has been loaded.`);
-                    initFlashcardMode(set);
-                } else {
-                    showToast('error', 'Set Not Found', 'The shared study set could not be found.');
-                }
-            }
-            
-            // Show welcome message
-            showToast('success', 'Welcome to GitHut', 'Create and study flashcards for free!');
-        });
-    </script>
-</body>
-</html>        // Advanced bulk import functionality with AI detection
-        bulkText.addEventListener('input', () => {
-            // Auto-detect format and update preview
-            intelligentPreviewUpdate();
-        });
-        
-        // Function to intelligently update the preview
-        function intelligentPreviewUpdate() {
-            const text = bulkText.value.trim();
-            
-            if (!text) {
-                separatorPreview.querySelector('.separator-preview-content').innerHTML = '<p>Enter some text to see a preview</p>';
-                return;
-            }
-            
-            // Auto-detect the most likely format
-            const detectedFormat = detectFormat(text);
-            
-            // Update the separator radio buttons to match detected format
-            if (detectedFormat.type === 'custom') {
-                document.getElementById('separator-custom').checked = true;
-                customSeparator.disabled = false;
-                customSeparator.value = detectedFormat.separator;
-            } else if (detectedFormat.type === 'tab') {
-                document.getElementById('separator-tab').checked = true;
-                customSeparator.disabled = true;
-            } else {
-                // Try to find a matching radio button
-                const radioBtn = document.getElementById(`separator-${detectedFormat.type}`);
-                if (radioBtn) {
-                    radioBtn.checked = true;
-                } else {
-                    // Default to custom if no match
-                    document.getElementById('separator-custom').checked = true;
-                    customSeparator.disabled = false;
-                    customSeparator.value = detectedFormat.separator;
-                }
-                customSeparator.disabled = true;
-            }
-            
-            // Generate preview using detected cards
-            generatePreview(detectedFormat.cards);
-        }
-        
-        // Function to detect format and extract cards
-        function detectFormat(text) {
-            // Split by lines first
-            const lines = text.split(/\r?\n/).filter(line => line.trim());
-            
-            // Common separators to check
-            const commonSeparators = ['-', ':', '\t', '=', '–', '—', ' - ', ': ', ' : ', ' = ', ' – ', ' — '];
-            
-            // Count occurrences of each separator
-            const separatorCounts = {};
-            commonSeparators.forEach(sep => {
-                separatorCounts[sep] = 0;
-            });
-            
-            lines.forEach(line => {
-                commonSeparators.forEach(sep => {
-                    if (line.includes(sep)) {
-                        separatorCounts[sep]++;
-                    }
-                });
-            });
-            
-            // Find the most common separator
-            let bestSeparator = null;
-            let bestCount = 0;
-            let bestRatio = 0;
-            
-            for (const [sep, count] of Object.entries(separatorCounts)) {
-                const ratio = count / lines.length;
-                if (ratio > bestRatio) {
-                    bestSeparator = sep;
-                    bestCount = count;
-                    bestRatio = ratio;
-                }
-            }
-            
-            // If no clear separator or poor match, try to detect sentence pattern
-            if (bestRatio < 0.5) {
-                // Check for alternating term/definition pattern
-                if (lines.length >= 2 && lines.length % 2 === 0) {
-                    // Look for pattern where every other line is shorter (terms) and others are longer (definitions)
-                    let isAlternating = true;
-                    for (let i = 0; i < lines.length; i += 2) {
-                        if (i + 1 < lines.length) {
-                            // If pattern doesn't hold, break
-                            if (lines[i].length >= lines[i + 1].length && lines[i + 1].length > 20) {
-                                isAlternating = false;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (isAlternating) {
-                        // Create cards from alternating lines
-                        const cards = [];
-                        for (let i = 0; i < lines.length; i += 2) {
-                            if (i + 1 < lines.length) {
-                                cards.push({
-                                    id: generateId(),
-                                    term: lines[i].trim(),
-                                    definition: lines[i + 1].trim()
-                                });
-                            }
-                        }
-                        return { type: 'alternating', separator: null, cards };
-                    }
-                }
-                
-                // If we still can't find a pattern, look for paragraphs
-                const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim());
-                if (paragraphs.length >= 2) {
-                    // Check if first line of each paragraph could be a term
-                    const cards = [];
-                    
-                    paragraphs.forEach(para => {
-                        const paraLines = para.split(/\r?\n/).filter(l => l.trim());
-                        if (paraLines.length >= 2) {
-                            // First line is the term, rest is definition
-                            const term = paraLines[0].trim();
-                            const definition = paraLines.slice(1).join(' ').trim();
-                            
-                            cards.push({
-                                id: generateId(),
-                                term,
-                                definition
-                            });
-                        } else if (paraLines.length === 1) {
-                            // Look for a colon or dash in the single line
-                            const line = paraLines[0];
-                            for (const sep of [': ', ' - ', ' – ']) {
-                                if (line.includes(sep)) {
-                                    const parts = line.split(sep);
-                                    if (parts.length >= 2) {
-                                        cards.push({
-                                            id: generateId(),
-                                            term: parts[0].trim(),
-                                            definition: parts.slice(1).join(sep).trim()
-                                        });
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    });
-                    
-                    if (cards.length > 0) {
-                        return { type: 'paragraph', separator: null, cards };
-                    }
-                }
-                
-                // Fallback to trying each common separator and taking the one that works best
-                const results = commonSeparators.map(sep => {
-                    const cards = extractCardsWithSeparator(lines, sep);
-                    return { separator: sep, cards };
-                });
-                
-                // Find the separator that generated the most valid cards
-                const bestResult = results.reduce((best, current) => {
-                    return current.cards.length > best.cards.length ? current : best;
-                }, { separator: null, cards: [] });
-                
-                if (bestResult.cards.length > 0) {
-                    // Determine the type based on the separator
-                    let type;
-                    if (bestResult.separator === '\t') {
-                        type = 'tab';
-                    } else if (['-', ' - '].includes(bestResult.separator)) {
-                        type = 'dash';
-                    } else if ([':', ' : '].includes(bestResult.separator)) {
-                        type = 'colon';
-                    } else {
-                        type = 'custom';
-                    }
-                    
-                    return { type, separator: bestResult.separator, cards: bestResult.cards };
-                }
-            } else {
-                // We have a good separator, use it
-                const cards = extractCardsWithSeparator(lines, bestSeparator);
-                
-                // Determine the type based on the separator
-                let type;
-                if (bestSeparator === '\t') {
-                    type = 'tab';
-                } else if (['-', ' - '].includes(bestSeparator)) {
-                    type = 'dash';
-                } else if ([':', ' : '].includes(bestSeparator)) {
-                    type = 'colon';
-                } else {
-                    type = 'custom';
-                }
-                
-                return { type, separator: bestSeparator, cards };
-            }
-            
-            // If all else fails, just try dash as a default
-            const cards = extractCardsWithSeparator(lines, '-');
-            return { type: 'dash', separator: '-', cards };
-        }
-        
-        // Function to extract cards using a specific separator
-        function extractCardsWithSeparator(lines, separator) {
-            const cards = [];
-            
-            for (const line of lines) {
-                if (line.includes(separator)) {
-                    const parts = line.split(separator);
-                    if (parts.length >= 2) {
-                        const term = parts[0].trim();
-                        const definition = parts.slice(1).join(separator).trim();
-                        
-                        if (term && definition) {
-                            cards.push({
-                                id: generateId(),
-                                term,
-                                definition
-                            });
-                        }
-                    }
-                }
-            }
-            
-            return cards;
-        }
-        
-        // Function to generate preview from detected cards
-        function generatePreview(cards) {
-            if (!cards || cards.length === 0) {
-                separatorPreview.querySelector('.separator-preview-content').innerHTML = '<p>No valid cards detected. Try adjusting your text format.</p>';
-                return;
-            }
-            
-            // Preview first 3 cards (or fewer if there are less)
-            const previewCards = cards.slice(0, 3);
-            
-            let previewHTML = '';
-            
-            for (const card of previewCards) {
-                previewHTML += `
-                    <div class="separator-preview-item">
-                        <div class="separator-preview-term">${escapeHtml(card.term)}</div>
-                        <div class="separator-preview-definition">${escapeHtml(card.definition)}</div>
-                    </div>
-                `;
-            }
-            
-            if (cards.length > 3) {
-                previewHTML += `<div style="margin-top: 0.5rem; color: var(--text-light);">${cards.length - 3} more items detected</div>`;
-            }
-            
-            separatorPreview.querySelector('.separator-preview-content').innerHTML = previewHTML;
-        }
-        
-        // Function to clean text by removing redundancies
-        function cleanTextForImport(text) {
-            // Remove duplicate empty lines
-            text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
-            
-            // Remove common redundant prefixes like "Term:" or "Definition:"
-            text = text.replace(/^(Term|Q|Question|Vocabulary|Word)\s*[:.-]\s*/gmi, '');
-            text = text.replace(/^(Definition|A|Answer|Meaning|Description)\s*[:.-]\s*/gmi, '');
-            
-            // Remove any HTML-like tags
-            text = text.replace(/<[^>]*>/g, '');
-            
-            // Remove any markdown-like formatting
-            text = text.replace(/\*\*(.*?)\*\*/g, '$1'); // Bold
-            text = text.replace(/\*(.*?)\*/g, '$1');     // Italic
-            text = text.replace(/__(.*?)__/g, '$1');     // Underline
-            text = text.replace(/~~(.*?)~~/g, '$1');     // Strikethrough
-            
-            // Remove duplicate spaces
-            text = text.replace(/\s+/g, ' ');
-            
-            // Remove trailing/leading spaces on each line
-            text = text.split('\n').map(line => line.trim()).join('\n');
-            
-            return text;
-        }
-        
-        // Process bulk import with intelligent detection
-        bulkImportBtn.addEventListener('click', () => {
-            let text = bulkText.value.trim();
-            
-            if (!text) {
-                showToast('warning', 'No Content', 'Please enter some text to import.');
-                return;
-            }
-            
-            // Clean the text first
-            text = cleanTextForImport(text);
-            
-            // Detect format and extract cards
-            const result = detectFormat(text);
-            
-            if (!result.cards || result.cards.length === 0) {
-                showToast('error', 'No Valid Cards', 'Could not create any valid cards from your text. Please check your format.');
-                return;
-            }
-            
-            // Perform deduplication and content cleanup
-            const uniqueTerms = new Set();
-            const cleanedCards = result.cards.filter(card => {
-                // Skip if empty term or definition
-                if (!card.term.trim() || !card.definition.trim()) return false;
-                
-                // Skip duplicates
-                const termLower = card.term.toLowerCase();
-                if (uniqueTerms.has(termLower)) return false;
-                uniqueTerms.add(        const progressText = document.getElementById('progress-text');
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const tabPanes = document.querySelectorAll('.tab-pane');
-        const loginBtn = document.getElementById('login-btn');
-        const signupBtn = document.getElementById('signup-btn');
-        const loginModal = document.getElementById('login-modal');
-        const signupModal = document.getElementById('signup-modal');
-        const closeLoginModal = document.getElementById('close-login-modal');
-        const closeSignupModal = document.getElementById('close-signup-modal');
-        const cancelLogin = document.getElementById('cancel-login');
-        const cancelSignup = document.getElementById('cancel-signup');
-        const submitLogin = document.getElementById('submit-login');
-        const submitSignup = document.getElementById('submit-signup');
-        const bulkImportBtn = document.getElementById('bulk-import-btn');
-        const quizletImportBtn = document.getElementById('quizlet-import-btn');
-        const separatorOptions = document.querySelectorAll('input[name="separator"]');
-        const customSeparator = document.getElementById('custom-separator');
-        const separatorPreview = document.getElementById('separator-preview');
-        const bulkText = document.querySelector('.bulk-text');
-        const toastContainer = document.getElementById('toast-container');
-        
-        // Firebase configuration (would be replaced with actual Firebase config in production)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDGithut3StudyApp84921",
-            authDomain: "githut-study.firebaseapp.com",
-            projectId: "githut-study",
-            storageBucket: "githut-study.appspot.com",
-            messagingSenderId: "235181924578",
-            appId: "1:235181924578:web:a92c4d5f6e2c9b3a7d2e1b",
-            databaseURL: "https://githut-study.firebaseio.com"
-        };
-        
-        // Sample data structure for study sets
-        let currentSet = {
-            id: generateId(),
-            title: "",
-            description: "",
-            cards: [
-                { id: generateId(), term: "", definition: "" },
-                { id: generateId(), term: "", definition: "" }
-            ],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            userId: null
-        };
-        
-        // Current card index for flashcard view
-        let currentCardIndex = 0;
-        
-        // All study sets (would be fetched from database in real implementation)
-        const studySets = [
-            {
-                id: "set1",
-                title: "Biology 101: Chapter 3",
-                description: "Key concepts from Chapter 3",
-                cards: [
-                    { id: "card1", term: "Photosynthesis", definition: "The process by which green plants use sunlight to synthesize foods with carbon dioxide and water" },
-                    { id: "card2", term: "Mitochondria", definition: "Organelles in cells that generate energy for the cell" },
-                    { id: "card3", term: "Osmosis", definition: "The movement of water through a semipermeable membrane" }
-                ],
-                createdAt: "2025-02-15T00:00:00.000Z",
-                updatedAt: "2025-03-08T00:00:00.000Z",
-                userId: "user1"
-            },
-            {
-                id: "set2",
-                title: "Spanish Vocabulary",
-                description: "Basic Spanish words and phrases",
-                cards: [
-                    { id: "card4", term: "Hola", definition: "Hello" },
-                    { id: "card5", term: "Adiós", definition: "Goodbye" },
-                    { id: "card6", term: "Buenos días", definition: "Good morning" }
-                ],
-                createdAt: "2025-01-20T00:00:00.000Z",
-                updatedAt: "2025-03-03T00:00:00.000Z",
-                userId: "user1"
-            }
-        ];
-        
-        // Mobile menu toggle
-        mobileMenuBtn.addEventListener('click', () => {
-            nav.classList.toggle('active');
-        });
-        
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (nav.classList.contains('active') && !nav.contains(e.target) && e.target !== mobileMenuBtn) {
-                nav.classList.remove('active');
-            }
-        });
-        
-        // Tab functionality
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Remove active class from all buttons and panes
-                tabBtns.forEach(b => b.classList.remove('active'));
-                tabPanes.forEach(p => p.classList.remove('active'));
-                
-                // Add active class to clicked button and corresponding pane
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.target).classList.add('active');
-            });
-        });
-        
-        // Add card functionality
-        addCardBtn.addEventListener('click', () => {
-            const cardCount = cardContainer.children.length + 1;
-            const newCardId = generateId();
-            
-            const newCard = document.createElement('div');
-            newCard.className = 'card';
-            newCard.innerHTML = `
-                <div class="card-number">${cardCount}</div>
-                <div class="card-input-group">
-                    <input type="text" placeholder="Term">
-                    <div class="card-tools">
-                        <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
-                        <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
-                    </div>
-                </div>
-                <div class="card-input-group">
-                    <textarea placeholder="Definition"></textarea>
-                    <div class="card-tools">
-                        <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
-                        <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
-                    </div>
-                </div>
-                <button class="remove-card-btn"><i class="fas fa-times"></i></button>
-            `;
-            cardContainer.appendChild(newCard);
-            
-            // Add to data structure
-            currentSet.cards.push({ id: newCardId, term: "", definition: "" });
-            
-            // Add event listener to new remove button
-            const removeBtn = newCard.querySelector('.remove-card-btn');
-            removeBtn.addEventListener('click', () => removeCard(newCard));
-            
-            // Focus on the new term input
-            const newTermInput = newCard.querySelector('input');
-            newTermInput.focus();
-        });
-        
-        // Remove card functionality
-        function removeCard(card) {
-            // Don't remove if there's only one card left
-            if (cardContainer.children.length <= 1) {
-                showToast('warning', 'Cannot Remove', 'A study set must have at least one card.');
-                return;
-            }
-            
-            // Get the index of the card
-            const index = Array.from(cardContainer.children).indexOf(card);
-            
-            // Remove from data structure
-            currentSet.cards.splice(index, 1);
-            
-            // Remove from DOM
-            card.remove();
-            
-            // Update card numbers
-            updateCardNumbers();
-        }
-        
-        // Update card numbers after removal
-        function updateCardNumbers() {
-            const cards = cardContainer.querySelectorAll('.card');
-            cards.forEach((card, index) => {
-                card.querySelector('.card-number').textContent = index + 1;
-            });
-        }
-        
-        // Add event listeners to existing remove buttons
-        document.querySelectorAll('.remove-card-btn').forEach(btn => {
-            btn.addEventListener('click', () => removeCard(btn.closest('.card')));
-        });
-        
-        // Create study set functionality with cloud synchronization
-        createSetBtn.addEventListener('click', () => {
-            // Show loading state
-            createSetBtn.innerHTML = '<span class="spinner"></span> Creating...';
-            createSetBtn.disabled = true;
-            
-            // Gather data from inputs
-            currentSet.title = document.querySelector('.set-title').value;
-            currentSet.description = document.querySelector('.set-description').value;
-            
-            // Validate title
-            if (!currentSet.title.trim()) {
-                showToast('error', 'Title Required', 'Please enter a title for your study set.');
-                createSetBtn.innerHTML = '<i class="fas fa-check"></i> Create Study Set';
-                createSetBtn.disabled = false;
-                return;
-            }
-            
-            // Gather card data
-            const cardElements = document.querySelectorAll('.card');
-            currentSet.cards = [];
-            
-            let isValid = true;
-            
-            cardElements.forEach((card, index) => {
-                const termInput = card.querySelector('input');
-                const definitionInput = card.querySelector('textarea');
-                
-                const term = termInput.value.trim();
-                const definition = definitionInput.value.trim();
-                
-                // Validate that cards have content
-                if (!term || !definition) {
-                    isValid = false;
-                    // Highlight empty fields
-                    if (!term) termInput.style.borderColor = 'var(--danger)';
-                    if (!definition) definitionInput.style.borderColor = 'var(--danger)';
-                } else {
-                    termInput.style.borderColor = 'var(--gray-300)';
-                    definitionInput.style.borderColor = 'var(--gray-300)';
-                }
-                
-                currentSet.cards.push({
-                    id: generateId(),
-                    term: term,
-                    definition: definition,
-                    mastery: 0, // Track learning progress
-                    lastReviewed: null
-                });
-            });
-            
-            if (!isValid) {
-                showToast('error', 'Incomplete Cards', 'Please fill in all terms and definitions.');
-                createSetBtn.innerHTML = '<i class="fas fa-check"></i> Create Study Set';
-                createSetBtn.disabled = false;
-                return;
-            }
-            
-            // Update set metadata
-            currentSet.updatedAt = new Date().toISOString();
-            currentSet.visibility = 'public'; // Make public by default for discovery
-            currentSet.tags = extractTags(currentSet.title + ' ' + currentSet.description);
-            currentSet.userId = getCurrentUserId() || 'anonymous';
-            currentSet.username = getCurrentUsername() || 'Anonymous User';
-            currentSet.language = detectLanguage(currentSet.cards);
-            currentSet.views = 0;
-            currentSet.favorites = 0;
-            currentSet.copies = 0;
-            
-            // Save to database with enhanced functionality
-            saveStudySet(currentSet)
-                .then((savedSet) => {
-                    // Reset button state
-                    createSetBtn.innerHTML = '<i class="fas fa-check"></i> Create Study Set';
-                    createSetBtn.disabled = false;
-                    
-                    // Update current set with server response
-                    currentSet = savedSet;
-                    
-                    // Show success message
-                    showToast('success', 'Study Set Created', 'Your study set has been saved to the cloud.');
-                    
-                    // Add to search index for discovery
-                    indexStudySet(savedSet);
-                    
-                    // Show study modes
-                    studyModes.style.display = 'block';
-                    
-                    // Scroll to study modes
-                    studyModes.scrollIntoView({ behavior: 'smooth' });
-                    
-                    // Update library view to include the new set
-                    refreshLibrary();
-                })
-                .catch(error => {
-                    showToast('error', 'Save Failed', 'There was an error saving your study set. Please try again.');
-                    console.error('Error saving study set:', error);
-                    
-                    createSetBtn.innerHTML = '<i class="fas fa-check"></i> Create Study Set';
-                    createSetBtn.disabled = false;
-                });
-        });
-        
-        // Function to extract tags from text
-        function extractTags(text) {
-            // Extract likely tags based on content
-            const commonSubjects = [
-                'math', 'algebra', 'geometry', 'calculus', 
-                'biology', 'chemistry', 'physics', 'science',
-                'history', 'geography', 'economics', 'psychology',
-                'english', 'literature', 'grammar', 'writing',
-                'spanish', 'french', 'german', 'italian', 'language',
-                'computer', 'programming', 'coding', 'software',
-                'art', 'music', 'dance', 'theater', 'film',
-                'sat', 'act', 'test', 'exam', 'quiz',
-                'vocabulary', 'definition', 'term',
-                'medical', 'nursing', 'anatomy', 'physiology',
-                'law', 'legal', 'business', 'finance', 'accounting'
-            ];
-            
-            const words = text.toLowerCase().split(/\W+/);
-            const tags = [];
-            
-            for (const word of words) {
-                if (word.length > 3 && commonSubjects.includes(word)) {
-                    tags.push(word);
-                }
-            }
-            
-            // Add additional tags based on number of cards
-            if (currentSet.cards.length <= 10) {
-                tags.push('small-set');
-            } else if (currentSet.cards.length >= 50) {
-                tags.push('large-set');
-            }
-            
-            // Limit to 5 unique tags
-            return [...new Set(tags)].slice(0, 5);
-        }
-        
-        // Function to detect language of the cards
-        function detectLanguage(cards) {
-            // Simple language detection based on common words
-            const spanishWords = ['el', 'la', 'los', 'las', 'es', 'son', 'está', 'están', 'y', 'o', 'pero', 'si', 'cuando', 'como', 'qué', 'cuál', 'por qué'];
-            const frenchWords = ['le', 'la', 'les', 'un', 'une', 'des', 'est', 'sont', 'et', 'ou', 'mais', 'si', 'quand', 'comment', 'quel', 'quelle', 'pourquoi'];
-            const germanWords = ['der', 'die', 'das', 'ein', 'eine', 'ist', 'sind', 'und', 'oder', 'aber', 'wenn', 'wie', 'was', 'warum', 'welche'];
-            
-            let englishCount = 0;
-            let spanishCount = 0;
-            let frenchCount = 0;
-            let germanCount = 0;
-            
-            for (const card of cards) {
-                const text = (card.term + ' ' + card.definition).toLowerCase();
-                const words = text.split(/\W+/);
-                
-                for (const word of words) {
-                    if (spanishWords.includes(word)) spanishCount++;
-                    if (frenchWords.includes(word)) frenchCount++;
-                    if (germanWords.includes(word)) germanCount++;
-                    if (word.length >= 2) englishCount++; // English is default
-                }
-            }
-            
-            const counts = [
-                { lang: 'english', count: englishCount },
-                { lang: 'spanish', count: spanishCount },
-                { lang: 'french', count: frenchCount },
-                { lang: 'german', count: germanCount }
-            ];
-            
-            // Find the language with the highest count
-            const detected = counts.reduce((prev, current) => 
-                (current.count > prev.count) ? current : prev
-            );
-            
-            return detected.lang;
-        }
-        
-        // Improved function to save study set with cloud sync
-        function saveStudySet(set) {
-            return new Promise((resolve, reject) => {
-                // In a real implementation, this would use Firebase
-                try {
-                    // Simulate saving to cloud database
-                    setTimeout(() => {
-                        console.log('Saving study set to cloud:', set);
-                        
-                        // Generate server-side ID if new set
-                        if (!set.serverId) {
-                            set.serverId = 'server_' + generateId();
-                        }
-                        
-                        // Add to local collection for demo 
-                        const existingIndex = studySets.findIndex(s => s.id === set.id);
-                        if (existingIndex >= 0) {
-                            studySets[existingIndex] = set;
-                        } else {
-                            studySets.push(set);
-                        }
-                        
-                        // Simulate server response with additional data
-                        const serverResponse = {
-                            ...set,
-                            syncedAt: new Date().toISOString(),
-                            status: 'synced'
-                        };
-                        
-                        // Store in local storage as backup
-                        localStorage.setItem(`githut_set_${set.id}`, JSON.stringify(serverResponse));
-                        
-                        // Success
-                        resolve(serverResponse);
-                    }, 1200);
-                } catch (error) {
-                    reject(error);
-                }
-            });
-        }
-        
-        // Function to get current user ID (would use Firebase Auth in real implementation)
-        function getCurrentUserId() {
-            // Check if user is logged in
-            const userData = JSON.parse(localStorage.getItem('githut_user') || 'null');
-            return userData ? userData.uid : null;
-        }
-        
-        // Function to get current username
-        function getCurrentUsername() {
-            const userData = JSON.parse(localStorage.getItem('githut_user') || 'null');
-            return userData ? userData.displayName : null;
-        }
-        
-        // Function to add study set to search index
-        function indexStudySet(set) {
-            // In a real implementation, this would add to a search index
-            console.log('Indexing study set for discovery:', set);
-            
-            // For the demo, we'll just add it to a "discovery" array in localStorage
-            const discoveryIndex = JSON.parse(localStorage.getItem('githut_discovery') || '[]');
-            
-            // Only add public sets
-            if (set.visibility === 'public') {
-                // Add set metadata to discovery index (not the full cards)
-                discoveryIndex.push({
-                    id: set.id,
-                    serverId: set.serverId,
-                    title: set.title,
-                    description: set.description,
-                    cardCount: set.cards.length,
-                    language: set.language,
-                    tags: set.tags,
-                    userId: set.userId,
-                    username: set.username,
-                    createdAt: set.createdAt,
-                    updatedAt: set.updatedAt
-                });
-                
-                // Save updated index
-                localStorage.setItem('githut_discovery', JSON.stringify(discoveryIndex));
-            }
-        }
-                    background: none;
-            border: none;
-            font-size: 1rem;
-            color: var(--text-light);
-            cursor: pointer;
-            opacity: 0.7;
-            transition: var(--transition);
-        }
-
-        .toast-close:hover {
-            opacity: 1;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-
-        /* Loading States */
-        .loading {
-            position: relative;
-            pointer-events: none;
-        }
-
-        .loading::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            border-radius: inherit;
-        }
-
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(66, 87, 178, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 1s linear infinite;
-            position: absolute;
-            top: calc(50% - 12px);
-            left: calc(50% - 12px);
-            z-index: 11;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Responsive Styles */
-        @media (max-width: 1024px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .mobile-menu-btn {
-                display: block;
-            }
-
-            nav {
-                position: fixed;
-                top: 0;
-                left: -100%;
-                width: 70%;
-                height: 100vh;
-                background-color: var(--white);
-                z-index: 1000;
-                transition: var(--transition);
-                box-shadow: var(--shadow-lg);
-                padding: 2rem;
-            }
-
-            nav.active {
-                left: 0;
-            }
-
-            nav ul {
-                flex-direction: column;
-                gap: 1rem;
-                margin-top: 2rem;
-            }
-
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .card {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .card-number {
-                position: static;
-                transform: none;
-                margin-bottom: 0.5rem;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .action-buttons-group {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .action-buttons-group .btn {
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .hero h1 {
-                font-size: 1.8rem;
-            }
-
-            .section-title {
-                font-size: 1.6rem;
-            }
-
-            .feature-card {
-                padding: 1.5rem 1rem;
-            }
-
-            .mode-buttons {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="header-container">
-            <div class="logo">
-                <i class="fas fa-brain"></i>
-                GitHut
-            </div>
-            <button class="mobile-menu-btn" id="mobile-menu-btn">
-                <i class="fas fa-bars"></i>
-            </button>
-            <nav id="nav">
-                <ul>
-                    <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
-                    <li><a href="#library"><i class="fas fa-book"></i> Library</a></li>
-                    <li><a href="#create"><i class="fas fa-plus-circle"></i> Create</a></li>
-                    <li><a href="#"><i class="fas fa-info-circle"></i> About</a></li>
-                </ul>
-            </nav>
-            <div class="auth-buttons">
-                <button class="btn btn-outline" id="login-btn"><i class="fas fa-sign-in-alt"></i> Log In</button>
-                <button class="btn btn-primary" id="signup-btn"><i class="fas fa-user-plus"></i> Sign Up</button>
-            </div>
-        </div>
-    </header>
-    
-    <main>
-        <section class="hero">
-            <h1>Study Smarter, Not Harder</h1>
-            <p>Create, share, and study flashcards for free - without any limitations</p>
-            <div class="search-box">
-                <input type="text" placeholder="Search for study sets, classes, or users...">
-                <button><i class="fas fa-search"></i> Search</button>
-            </div>
-        </section>
-        
-        <section class="features">
-            <div class="feature-card">
-                <i class="fas fa-edit"></i>
-                <h3>Create Flashcards</h3>
-                <p>Make your own custom study sets with unlimited cards, images, and formatting options</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-file-import"></i>
-                <h3>Bulk Import</h3>
-                <p>Easily convert unformatted text to flashcards or import from other platforms like Quizlet</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-graduation-cap"></i>
-                <h3>Multiple Study Modes</h3>
-                <p>Learn with flashcards, practice tests, matching games, and more - all for free</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-cloud"></i>
-                <h3>Cloud Storage</h3>
-                <p>Access your study sets from anywhere with secure cloud storage and synchronization</p>
-            </div>
-        </section>
-        
-        <section class="tabs">
-            <div class="tab-nav">
-                <button class="tab-btn active" data-target="create-tab">Create Cards</button>
-                <button class="tab-btn" data-target="bulk-tab">Bulk Import</button>
-                <button class="tab-btn" data-target="import-tab">Import from Quizlet</button>
-            </div>
-            
-            <div class="tab-content">
-                <!-- Create Cards Tab -->
-                <div class="tab-pane active" id="create-tab">
-                    <div class="create-set">
-                        <div class="study-set">
-                            <input type="text" class="set-title" placeholder="Enter a title for your study set...">
-                            <textarea class="set-description" placeholder="Add a description (optional)..."></textarea>
-                            
-                            <div class="card-container">
-                                <div class="card">
-                                    <div class="card-number">1</div>
-                                    <div class="card-input-group">
-                                        <input type="text" placeholder="Term">
-                                        <div class="card-tools">
-                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
-                                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
-                                        </div>
-                                    </div>
-                                    <div class="card-input-group">
-                                        <textarea placeholder="Definition"></textarea>
-                                        <div class="card-tools">
-                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
-                                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
-                                        </div>
-                                    </div>
-                                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
-                                </div>
-                                
-                                <div class="card">
-                                    <div class="card-number">2</div>
-                                    <div class="card-input-group">
-                                        <input type="text" placeholder="Term">
-                                        <div class="card-tools">
-                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
-                                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
-                                        </div>
-                                    </div>
-                                    <div class="card-input-group">
-                                        <textarea placeholder="Definition"></textarea>
-                                        <div class="card-tools">
-                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
-                                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
-                                        </div>
-                                    </div>
-                                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
-                                </div>
-                            </div>
-                            
-                            <button class="add-card" id="add-card-btn">
-                                <i class="fas fa-plus"></i> Add Card
-                            </button>
-                            
-                            <div class="action-buttons">
-                                <div class="action-buttons-group">
-                                    <button class="btn btn-outline"><i class="fas fa-cog"></i> Settings</button>
-                                </div>
-                                <div class="action-buttons-group">
-                                    <button class="btn btn-outline"><i class="fas fa-save"></i> Save Draft</button>
-                                    <button class="btn btn-primary" id="create-set-btn"><i class="fas fa-check"></i> Create Study Set</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Bulk Import Tab -->
-                <div class="tab-pane" id="bulk-tab">
-                    <div class="bulk-import-container">
-                        <p>Paste your content below. Our smart system will automatically detect terms and definitions.</p>
-                        <textarea class="bulk-text" placeholder="Example:
-Photosynthesis - The process by which green plants use sunlight to synthesize foods with carbon dioxide and water
-Mitochondria - Organelles in cells that generate energy for the cell
-Osmosis - The movement of water through a semipermeable membrane"></textarea>
-                        
-                        <div class="separator-options">
-                            <p>Separator between term and definition:</p>
-                            <div class="separator-option">
-                                <input type="radio" id="separator-dash" name="separator" value="-" checked>
-                                <label for="separator-dash">Dash (-)</label>
-                            </div>
-                            <div class="separator-option">
-                                <input type="radio" id="separator-colon" name="separator" value=":">
-                                <label for="separator-colon">Colon (:)</label>
-                            </div>
-                            <div class="separator-option">
-                                <input type="radio" id="separator-tab" name="separator" value="tab">
-                                <label for="separator-tab">Tab</label>
-                            </div>
-                            <div class="separator-option">
-                                <input type="radio" id="separator-custom" name="separator" value="custom">
-                                <label for="separator-custom">Custom:</label>
-                                <input type="text" id="custom-separator" placeholder="Enter custom separator" disabled>
-                            </div>
-                        </div>
-                        
-                        <div class="separator-preview" id="separator-preview">
-                            <h4>Preview:</h4>
-                            <div class="separator-preview-content">
-                                <!-- Preview content will be inserted here -->
-                            </div>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <div class="action-buttons-group">
-                                <button class="btn btn-outline"><i class="fas fa-undo"></i> Clear</button>
-                            </div>
-                            <div class="action-buttons-group">
-                                <button class="btn btn-primary" id="bulk-import-btn"><i class="fas fa-file-import"></i> Create Cards from Text</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Import from Quizlet Tab -->
-                <div class="tab-pane" id="import-tab">
-                    <div class="import-container">
-                        <p>Enter the URL of the Quizlet set you want to import:</p>
-                        <input type="text" class="set-title" placeholder="https://quizlet.com/123456789/example-set-flash-cards/">
-                        
-                        <div class="action-buttons">
-                            <div class="action-buttons-group">
-                                <button class="btn btn-outline"><i class="fas fa-question-circle"></i> Help</button>
-                            </div>
-                            <div class="action-buttons-group">
-                                <button class="btn btn-primary" id="quizlet-import-btn"><i class="fas fa-file-import"></i> Import from Quizlet</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <section class="study-modes" id="study-modes">
-            <h2 class="section-title">Choose a Study Mode</h2>
-            <p class="section-subtitle">Different learning modes help you master the material in various ways</p>
-            
-            <div class="mode-buttons">
-                <div class="mode-btn" id="flashcard-button">
-                    <i class="fas fa-clone"></i>
-                    <h4>Flashcards</h4>
-                    <p>Review cards one by one and test your memory</p>
-                </div>
-                <div class="mode-btn">
-                    <i class="fas fa-graduation-cap"></i>
-                    <h4>Learn</h4>
-                    <p>Track your progress with spaced repetition</p>
-                </div>
-                <div class="mode-btn">
-                    <i class="fas fa-pencil-alt"></i>
-                    <h4>Test</h4>
-                    <p>Challenge yourself with various question types</p>
-                </div>
-                <div class="mode-btn">
-                    <i class="fas fa-th"></i>
-                    <h4>Match</h4>
-                    <p>Match terms and definitions against the clock</p>
-                </div>
-                <div class="mode-btn">
-                    <i class="fas fa-keyboard"></i>
-                    <h4>Write</h4>
-                    <p>Type your answers to check understanding</p>
-                </div>
-                <div class="mode-btn">
-                    <i class="fas fa-volume-up"></i>
-                    <h4>Spell</h4>
-                    <p>Practice spelling with audio prompts</p>
-                </div>
-            </div>
-        </section>
-        
-        <section class="flashcard-view" id="flashcard-view">
-            <div class="flashcard-header">
-                <h2>Biology 101: Chapter 3</h2>
-                <div class="flashcard-progress">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-fill"></div>
-                    </div>
-                    <span class="progress-text" id="progress-text">Card 1 of 12</span>
-                </div>
-            </div>
-            
-            <div class="flashcard-container">
-                <div class="flashcard" id="flashcard">
-                    <div class="flashcard-front">
-                        <div class="card-content">Photosynthesis</div>
-                        <div class="card-hint">Click to flip</div>
-                    </div>
-                    <div class="flashcard-back">
-                        <div class="card-content">The process by which green plants use sunlight to synthesize foods with carbon dioxide and water</div>
-                        <div class="card-hint">Click to flip back</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flashcard-controls">
-                <button class="btn btn-outline" id="prev-btn"><i class="fas fa-chevron-left"></i> Previous</button>
-                <button class="btn btn-secondary" id="flip-btn"><i class="fas fa-retweet"></i> Flip</button>
-                <button class="btn btn-primary" id="next-btn">Next <i class="fas fa-chevron-right"></i></button>
-            </div>
-        </section>
-        
-        <section class="library" id="library">
-            <h2 class="section-title">Study Set Library</h2>
-            <p class="section-subtitle">Browse and access all your study sets in one place</p>
-            
-            <div class="library-controls">
-                <div class="filter-options">
-                    <select class="filter-select">
-                        <option value="all">All Sets</option>
-                        <option value="created">Created by me</option>
-                        <option value="starred">Starred</option>
-                        <option value="recent">Recently viewed</option>
-                    </select>
-                    <select class="filter-select">
-                        <option value="recent">Recently updated</option>
-                        <option value="oldest">Oldest first</option>
-                        <option value="alphabetical">Alphabetical</option>
-                    </select>
-                </div>
-                <button class="btn btn-primary"><i class="fas fa-plus"></i> Create New Set</button>
-            </div>
-            
-            <div class="study-sets-grid">
-                <!-- Sample Study Set Cards -->
-                <div class="study-set-card">
-                    <div class="study-set-header">
-                        <h3 class="study-set-title">Biology 101: Chapter 3</h3>
-                        <div class="study-set-info">
-                            <span>12 cards</span>
-                            <span>Updated 2 days ago</span>
-                        </div>
-                    </div>
-                    <div class="study-set-body">
-                        <div class="preview-cards">
-                            <div class="preview-card">
-                                <div class="preview-term">Photosynthesis</div>
-                                <div class="preview-definition">The process by which green plants use sunlight to synthesize foods with carbon dioxide and water</div>
-                            </div>
-                            <div class="preview-card">
-                                <div class="preview-term">Mitochondria</div>
-                                <div class="preview-definition">Organelles in cells that generate energy for the cell</div>
-                            </div>
-                            <div class="preview-card">
-                                <div class="preview-term">Osmosis</div>
-                                <div class="preview-definition">The movement of water through a semipermeable membrane</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="study-set-footer">
-                        <button class="btn btn-outline btn-sm study-btn">Study</button>
-                        <div class="set-actions">
-                            <div class="action-icon star-icon"><i class="fas fa-star"></i></div>
-                            <div class="action-icon edit-icon"><i class="fas fa-edit"></i></div>
-                            <div class="action-icon share-icon"><i class="fas fa-share-alt"></i></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="study-set-card">
-                    <div class="study-set-header">
-                        <h3 class="study-set-title">Spanish Vocabulary</h3>
-                        <div class="study-set-info">
-                            <span>24 cards</span>
-                            <span>Updated 1 week ago</span>
-                        </div>
-                    </div>
-                    <div class="study-set-body">
-                        <div class="preview-cards">
-                            <div class="preview-card">
-                                <div class="preview-term">Hola</div>
-                                <div class="preview-definition">Hello</div>
-                            </div>
-                            <div class="preview-card">
-                                <div class="preview-term">Adiós</div>
-                                <div class="preview-definition">Goodbye</div>
-                            </div>
-                            <div class="preview-card">
-                                <div class="preview-term">Buenos días</div>
-                                <div class="preview-definition">Good morning</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="study-set-footer">
-                        <button class="btn btn-outline btn-sm study-btn">Study</button>
-                        <div class="set-actions">
-                            <div class="action-icon star-icon"><i class="fas fa-star"></i></div>
-                            <div class="action-icon edit-icon"><i class="fas fa-edit"></i></div>
-                            <div class="action-icon share-icon"><i class="fas fa-share-alt"></i></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="study-set-card">
-                    <div class="study-set-header">
-                        <h3 class="study-set-title">World History: Ancient Rome</h3>
-                        <div class="study-set-info">
-                            <span>18 cards</span>
-                            <span>Updated 3 days ago</span>
-                        </div>
-                    </div>
-                    <div class="study-set-body">
-                        <div class="preview-cards">
-                            <div class="preview-card">
-                                <div class="preview-term">Julius Caesar</div>
-                                <div class="preview-definition">Roman general and statesman who played a critical role in the events that led to the demise of the Roman Republic</div>
-                            </div>
-                            <div class="preview-card">
-                                <div class="preview-term">Roman Senate</div>
-                                <div class="preview-definition">A political institution in ancient Rome</div>
-                            </div>
-                            <div class="preview-card">
-                                <div class="preview-term">Colosseum</div>
-                                <div class="preview-definition">An oval amphitheatre in the centre of Rome, Italy</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="study-set-footer">
-                        <button class="btn btn-outline btn-sm study-btn">Study</button>
-                        <div class="set-actions">
-                            <div class="action-icon star-icon"><i class="fas fa-star"></i></div>
-                            <div class="action-icon edit-icon"><i class="fas fa-edit"></i></div>
-                            <div class="action-icon share-icon"><i class="fas fa-share-alt"></i></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-    
-    <!-- Login Modal -->
-    <div class="modal" id="login-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Log In to GitHut</h3>
-                <button class="modal-close" id="close-login-modal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <form id="login-form">
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="login-email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
-                        <input type="email" id="login-email" class="set-title" placeholder="Enter your email" required>
-                    </div>
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="login-password" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
-                        <input type="password" id="login-password" class="set-title" placeholder="Enter your password" required>
-                    </div>
-                    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="remember-me">
-                            <label for="remember-me">Remember me</label>
-                        </div>
-                        <a href="#" style="color: var(--primary); text-decoration: none;">Forgot password?</a>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" id="cancel-login">Cancel</button>
-                <button class="btn btn-primary" id="submit-login">Log In</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Sign Up Modal -->
-    <div class="modal" id="signup-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Create Your Account</h3>
-                <button class="modal-close" id="close-signup-modal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <form id="signup-form">
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="signup-name" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Full Name</label>
-                        <input type="text" id="signup-name" class="set-title" placeholder="Enter your name" required>
-                    </div>
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="signup-email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
-                        <input type="email" id="signup-email" class="set-title" placeholder="Enter your email" required>
-                    </div>
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="signup-password" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
-                        <input type="password" id="signup-password" class="set-title" placeholder="Create a password (min. 8 characters)" required>
-                    </div>
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="signup-confirm" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Confirm Password</label>
-                        <input type="password" id="signup-confirm" class="set-title" placeholder="Confirm your password" required>
-                    </div>
-                    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <input type="checkbox" id="terms" required>
-                        <label for="terms">I agree to the <a href="#" style="color: var(--primary);">Terms of Service</a> and <a href="#" style="color: var(--primary);">Privacy Policy</a></label>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" id="cancel-signup">Cancel</button>
-                <button class="btn btn-primary" id="submit-signup">Sign Up</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Toast Notifications Container -->
-    <div class="toast-container" id="toast-container">
-        <!-- Toast notifications will be inserted here -->
-    </div>
-    
-    <footer>
-        <div class="footer-container">
-            <div class="footer-column">
-                <h4>GitHut</h4>
-                <p>Free study tools for everyone, forever. Create, share, and learn with flashcards, practice tests, and more.</p>
-                <div class="social-links">
-                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
-                </div>
-            </div>
-            <div class="footer-column">
-                <h4>Features</h4>
-                <div class="footer-links">
-                    <a href="#">Flashcards</a>
-                    <a href="#">Study Modes</a>
-                    <a href="#">Bulk Import</a>
-                    <a href="#">Cloud Storage</a>
-                    <a href="#">Mobile App</a>
-                </div>
-            </div>
-            <div class="footer-column">
-                <h4>Resources</h4>
-                <div class="footer-links">
-                    <a href="#">Help Center</a>
-                    <a href="#">Student Blog</a>
-                    <a href="#">Teacher Resources</a>
-                    <a href="#">API Documentation</a>
-                    <a href="#">Community Forum</a>
-                </div>
-            </div>
-            <div class="footer-column">
-                <h4>Company</h4>
-                <div class="footer-links">
-                    <a href="#">About Us</a>
-                    <a href="#">Careers</a>
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                    <a href="#">Contact Us</a>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 GitHut. All rights reserved.</p>
-        </div>
-    </footer>
-    
-    <script>
-        // DOM elements
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const nav = document.getElementById('nav');
-        const addCardBtn = document.getElementById('add-card-btn');
-        const cardContainer = document.querySelector('.card-container');
-        const createSetBtn = document.getElementById('create-set-btn');
-        const studyModes = document.getElementById('study-modes');
-        const flashcardButton = document.getElementById('flashcard-button');
-        const flashcardView = document.getElementById('flashcard-view');
-        const flashcard = document.getElementById('flashcard');
-        const flipBtn = document.getElementById('flip-btn');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const progressFill = document.getElementById('progress-fill');
-        const progressText = document.getElementById('progress-text');
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3074,4 +1080,1535 @@ Osmosis - The movement of water through a semipermeable membrane"></textarea>
         }
 
         .toast-close {
-            backgroun
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: var(--text-light);
+            cursor: pointer;
+            opacity: 0.7;
+            transition: var(--transition);
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: inherit;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(66, 87, 178, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: calc(50% - 12px);
+            left: calc(50% - 12px);
+            z-index: 11;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            nav {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 70%;
+                height: 100vh;
+                background-color: var(--white);
+                z-index: 1000;
+                transition: var(--transition);
+                box-shadow: var(--shadow-lg);
+                padding: 2rem;
+            }
+
+            nav.active {
+                left: 0;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .card-number {
+                position: static;
+                transform: none;
+                margin-bottom: 0.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .action-buttons-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .action-buttons-group .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .section-title {
+                font-size: 1.6rem;
+            }
+
+            .feature-card {
+                padding: 1.5rem 1rem;
+            }
+
+            .mode-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                GitHut
+            </div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav id="nav">
+                <ul>
+                    <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#library"><i class="fas fa-book"></i> Library</a></li>
+                    <li><a href="#create"><i class="fas fa-plus-circle"></i> Create</a></li>
+                    <li><a href="#"><i class="fas fa-info-circle"></i> About</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <button class="btn btn-outline" id="login-btn"><i class="fas fa-sign-in-alt"></i> Log In</button>
+                <button class="btn btn-primary" id="signup-btn"><i class="fas fa-user-plus"></i> Sign Up</button>
+            </div>
+        </div>
+    </header>
+    
+    <main>
+        <section class="hero">
+            <h1>Study Smarter, Not Harder</h1>
+            <p>Create, share, and study flashcards for free - without any limitations</p>
+            <div class="search-box">
+                <input type="text" placeholder="Search for study sets, classes, or users...">
+                <button><i class="fas fa-search"></i> Search</button>
+            </div>
+        </section>
+        
+        <section class="features">
+            <div class="feature-card">
+                <i class="fas fa-edit"></i>
+                <h3>Create Flashcards</h3>
+                <p>Make your own custom study sets with unlimited cards, images, and formatting options</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-file-import"></i>
+                <h3>Bulk Import</h3>
+                <p>Easily convert unformatted text to flashcards or import from other platforms like Quizlet</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-graduation-cap"></i>
+                <h3>Multiple Study Modes</h3>
+                <p>Learn with flashcards, practice tests, matching games, and more - all for free</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-cloud"></i>
+                <h3>Cloud Storage</h3>
+                <p>Access your study sets from anywhere with secure cloud storage and synchronization</p>
+            </div>
+        </section>
+        
+        <section class="tabs">
+            <div class="tab-nav">
+                <button class="tab-btn active" data-target="create-tab">Create Cards</button>
+                <button class="tab-btn" data-target="bulk-tab">Bulk Import</button>
+                <button class="tab-btn" data-target="import-tab">Import from Quizlet</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Create Cards Tab -->
+                <div class="tab-pane active" id="create-tab">
+                    <div class="create-set">
+                        <div class="study-set">
+                            <input type="text" class="set-title" placeholder="Enter a title for your study set...">
+                            <textarea class="set-description" placeholder="Add a description (optional)..."></textarea>
+                            
+                            <div class="card-container">
+                                <div class="card">
+                                    <div class="card-number">1</div>
+                                    <div class="card-input-group">
+                                        <input type="text" placeholder="Term">
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-input-group">
+                                        <textarea placeholder="Definition"></textarea>
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
+                                        </div>
+                                    </div>
+                                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-number">2</div>
+                                    <div class="card-input-group">
+                                        <input type="text" placeholder="Term">
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-input-group">
+                                        <textarea placeholder="Definition"></textarea>
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
+                                        </div>
+                                    </div>
+                                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            
+                            <button class="add-card" id="add-card-btn">
+                                <i class="fas fa-plus"></i> Add Card
+                            </button>
+                            
+                            <div class="action-buttons">
+                                <div class="action-buttons-group">
+                                    <button class="btn btn-outline"><i class="fas fa-cog"></i> Settings</button>
+                                </div>
+                                <div class="action-buttons-group">
+                                    <button class="btn btn-outline"><i class="fas fa-save"></i> Save Draft</button>
+                                    <button class="btn btn-primary" id="create-set-btn"><i class="fas fa-check"></i> Create Study Set</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bulk Import Tab -->
+                <div class="tab-pane" id="bulk-tab">
+                    <div class="bulk-import-container">
+                        <p>Paste your content below. Each term and definition should be separated by your chosen separator.</p>
+                        <textarea class="bulk-text" placeholder="Example:
+Photosynthesis - The process by which green plants use sunlight to synthesize foods with carbon dioxide and water
+Mitochondria - Organelles in cells that generate energy for the cell
+Osmosis - The movement of water through a semipermeable membrane"></textarea>
+                        
+                        <div class="separator-options">
+                            <p>Separator between term and definition:</p>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-dash" name="separator" value="-" checked>
+                                <label for="separator-dash">Dash (-)</label>
+                            </div>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-colon" name="separator" value=":">
+                                <label for="separator-colon">Colon (:)</label>
+                            </div>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-tab" name="separator" value="tab">
+                                <label for="separator-tab">Tab</label>
+                            </div>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-custom" name="separator" value="custom">
+                                <label for="separator-custom">Custom:</label>
+                                <input type="text" id="custom-separator" placeholder="Enter custom separator" disabled>
+                            </div>
+                        </div>
+                        
+                        <div class="separator-preview" id="separator-preview">
+                            <h4>Preview:</h4>
+                            <div class="separator-preview-content">
+                                <!-- Preview content will be inserted here -->
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <div class="action-buttons-group">
+                                <button class="btn btn-outline"><i class="fas fa-undo"></i> Clear</button>
+                            </div>
+                            <div class="action-buttons-group">
+                                <button class="btn btn-primary" id="bulk-import-btn"><i class="fas fa-file-import"></i> Create Cards from Text</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Import from Quizlet Tab -->
+                <div class="tab-pane" id="import-tab">
+                    <div class="import-container">
+                        <p>Enter the URL of the Quizlet set you want to import:</p>
+                        <input type="text" class="set-title" placeholder="https://quizlet.com/123456789/example-set-flash-cards/">
+                        
+                        <div class="action-buttons">
+                            <div class="action-buttons-group">
+                                <button class="btn btn-outline"><i class="fas fa-question-circle"></i> Help</button>
+                            </div>
+                            <div class="action-buttons-group">
+                                <button class="btn btn-primary" id="quizlet-import-btn"><i class="fas fa-file-import"></i> Import from Quizlet</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="study-modes" id="study-modes">
+            <h2 class="section-title">Choose a Study Mode</h2>
+            <p class="section-subtitle">Different learning modes help you master the material in various ways</p>
+            
+            <div class="mode-buttons">
+                <div class="mode-btn" id="flashcard-button">
+                    <i class="fas fa-clone"></i>
+                    <h4>Flashcards</h4>
+                    <p>Review cards one by one and test your memory</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h4>Learn</h4>
+                    <p>Track your progress with spaced repetition</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-pencil-alt"></i>
+                    <h4>Test</h4>
+                    <p>Challenge yourself with various question types</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-th"></i>
+                    <h4>Match</h4>
+                    <p>Match terms and definitions against the clock</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-keyboard"></i>
+                    <h4>Write</h4>
+                    <p>Type your answers to check understanding</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-volume-up"></i>
+                    <h4>Spell</h4>
+                    <p>Practice spelling with audio prompts</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="flashcard-view" id="flashcard-view">
+            <div class="flashcard-header">
+                <h2>Biology 101: Chapter 3</h2>
+                <div class="flashcard-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <span class="progress-text" id="progress-text">Card 1 of 12</span>
+                </div>
+            </div>
+            
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                    <div class="flashcard-front">
+                        <div class="card-content">Photosynthesis</div>
+                        <div class="card-hint">Click to flip</div>
+                    </div>
+                    <div class="flashcard-back">
+                        <div class="card-content">The process by which green plants use sunlight to synthesize foods with carbon dioxide and water</div>
+                        <div class="card-hint">Click to flip back</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flashcard-controls">
+                <button class="btn btn-outline" id="prev-btn"><i class="fas fa-chevron-left"></i> Previous</button>
+                <button class="btn btn-secondary" id="flip-btn"><i class="fas fa-retweet"></i> Flip</button>
+                <button class="btn btn-primary" id="next-btn">Next <i class="fas fa-chevron-right"></i></button>
+            </div>
+        </section>
+        
+        <section class="library" id="library">
+            <h2 class="section-title">Study Set Library</h2>
+            <p class="section-subtitle">Browse and access all your study sets in one place</p>
+            
+            <div class="library-controls">
+                <div class="filter-options">
+                    <select class="filter-select">
+                        <option value="all">All Sets</option>
+                        <option value="created">Created by me</option>
+                        <option value="starred">Starred</option>
+                        <option value="recent">Recently viewed</option>
+                    </select>
+                    <select class="filter-select">
+                        <option value="recent">Recently updated</option>
+                        <option value="oldest">Oldest first</option>
+                        <option value="alphabetical">Alphabetical</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary"><i class="fas fa-plus"></i> Create New Set</button>
+            </div>
+            
+            <div class="study-sets-grid">
+                <!-- Sample Study Set Cards -->
+                <div class="study-set-card">
+                    <div class="study-set-header">
+                        <h3 class="study-set-title">Biology 101: Chapter 3</h3>
+                        <div class="study-set-info">
+                            <span>12 cards</span>
+                            <span>Updated 2 days ago</span>
+                        </div>
+                    </div>
+                    <div class="study-set-body">
+                        <div class="preview-cards">
+                            <div class="preview-card">
+                                <div class="preview-term">Photosynthesis</div>
+                                <div class="preview-definition">The process by which green plants use sunlight to synthesize foods with carbon dioxide and water</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Mitochondria</div>
+                                <div class="preview-definition">Organelles in cells that generate energy for the cell</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Osmosis</div>
+                                <div class="preview-definition">The movement of water through a semipermeable membrane</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="study-set-footer">
+                        <button class="btn btn-outline btn-sm">Study</button>
+                        <div class="set-actions">
+                            <div class="action-icon"><i class="fas fa-star"></i></div>
+                            <div class="action-icon"><i class="fas fa-edit"></i></div>
+                            <div class="action-icon"><i class="fas fa-share-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="study-set-card">
+                    <div class="study-set-header">
+                        <h3 class="study-set-title">Spanish Vocabulary</h3>
+                        <div class="study-set-info">
+                            <span>24 cards</span>
+                            <span>Updated 1 week ago</span>
+                        </div>
+                    </div>
+                    <div class="study-set-body">
+                        <div class="preview-cards">
+                            <div class="preview-card">
+                                <div class="preview-term">Hola</div>
+                                <div class="preview-definition">Hello</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Adiós</div>
+                                <div class="preview-definition">Goodbye</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Buenos días</div>
+                                <div class="preview-definition">Good morning</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="study-set-footer">
+                        <button class="btn btn-outline btn-sm">Study</button>
+                        <div class="set-actions">
+                            <div class="action-icon"><i class="fas fa-star"></i></div>
+                            <div class="action-icon"><i class="fas fa-edit"></i></div>
+                            <div class="action-icon"><i class="fas fa-share-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="study-set-card">
+                    <div class="study-set-header">
+                        <h3 class="study-set-title">World History: Ancient Rome</h3>
+                        <div class="study-set-info">
+                            <span>18 cards</span>
+                            <span>Updated 3 days ago</span>
+                        </div>
+                    </div>
+                    <div class="study-set-body">
+                        <div class="preview-cards">
+                            <div class="preview-card">
+                                <div class="preview-term">Julius Caesar</div>
+                                <div class="preview-definition">Roman general and statesman who played a critical role in the events that led to the demise of the Roman Republic</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Roman Senate</div>
+                                <div class="preview-definition">A political institution in ancient Rome</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Colosseum</div>
+                                <div class="preview-definition">An oval amphitheatre in the centre of Rome, Italy</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="study-set-footer">
+                        <button class="btn btn-outline btn-sm">Study</button>
+                        <div class="set-actions">
+                            <div class="action-icon"><i class="fas fa-star"></i></div>
+                            <div class="action-icon"><i class="fas fa-edit"></i></div>
+                            <div class="action-icon"><i class="fas fa-share-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Login Modal -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Log In to GitHut</h3>
+                <button class="modal-close" id="close-login-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="login-form">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="login-email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
+                        <input type="email" id="login-email" class="set-title" placeholder="Enter your email" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="login-password" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
+                        <input type="password" id="login-password" class="set-title" placeholder="Enter your password" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="remember-me">
+                            <label for="remember-me">Remember me</label>
+                        </div>
+                        <a href="#" style="color: var(--primary); text-decoration: none;">Forgot password?</a>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancel-login">Cancel</button>
+                <button class="btn btn-primary" id="submit-login">Log In</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sign Up Modal -->
+    <div class="modal" id="signup-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Your Account</h3>
+                <button class="modal-close" id="close-signup-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="signup-form">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-name" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Full Name</label>
+                        <input type="text" id="signup-name" class="set-title" placeholder="Enter your name" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
+                        <input type="email" id="signup-email" class="set-title" placeholder="Enter your email" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-password" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
+                        <input type="password" id="signup-password" class="set-title" placeholder="Create a password (min. 8 characters)" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-confirm" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Confirm Password</label>
+                        <input type="password" id="signup-confirm" class="set-title" placeholder="Confirm your password" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms">I agree to the <a href="#" style="color: var(--primary);">Terms of Service</a> and <a href="#" style="color: var(--primary);">Privacy Policy</a></label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancel-signup">Cancel</button>
+                <button class="btn btn-primary" id="submit-signup">Sign Up</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container">
+        <!-- Toast notifications will be inserted here -->
+    </div>
+    
+    <footer>
+        <div class="footer-container">
+            <div class="footer-column">
+                <h4>GitHut</h4>
+                <p>Free study tools for everyone, forever. Create, share, and learn with flashcards, practice tests, and more.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Features</h4>
+                <div class="footer-links">
+                    <a href="#">Flashcards</a>
+                    <a href="#">Study Modes</a>
+                    <a href="#">Bulk Import</a>
+                    <a href="#">Cloud Storage</a>
+                    <a href="#">Mobile App</a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Resources</h4>
+                <div class="footer-links">
+                    <a href="#">Help Center</a>
+                    <a href="#">Student Blog</a>
+                    <a href="#">Teacher Resources</a>
+                    <a href="#">API Documentation</a>
+                    <a href="#">Community Forum</a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Company</h4>
+                <div class="footer-links">
+                    <a href="#">About Us</a>
+                    <a href="#">Careers</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Contact Us</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 GitHut. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script>
+        // DOM elements
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const nav = document.getElementById('nav');
+        const addCardBtn = document.getElementById('add-card-btn');
+        const cardContainer = document.querySelector('.card-container');
+        const createSetBtn = document.getElementById('create-set-btn');
+        const studyModes = document.getElementById('study-modes');
+        const flashcardButton = document.getElementById('flashcard-button');
+        const flashcardView = document.getElementById('flashcard-view');
+        const flashcard = document.getElementById('flashcard');
+        const flipBtn = document.getElementById('flip-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const loginModal = document.getElementById('login-modal');
+        const signupModal = document.getElementById('signup-modal');
+        const closeLoginModal = document.getElementById('close-login-modal');
+        const closeSignupModal = document.getElementById('close-signup-modal');
+        const cancelLogin = document.getElementById('cancel-login');
+        const cancelSignup = document.getElementById('cancel-signup');
+        const submitLogin = document.getElementById('submit-login');
+        const submitSignup = document.getElementById('submit-signup');
+        const bulkImportBtn = document.getElementById('bulk-import-btn');
+        const quizletImportBtn = document.getElementById('quizlet-import-btn');
+        const separatorOptions = document.querySelectorAll('input[name="separator"]');
+        const customSeparator = document.getElementById('custom-separator');
+        const separatorPreview = document.getElementById('separator-preview');
+        const bulkText = document.querySelector('.bulk-text');
+        const toastContainer = document.getElementById('toast-container');
+        
+        // Firebase configuration (replace with your actual Firebase config)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "your-app.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-app.appspot.com",
+            messagingSenderId: "your-messaging-sender-id",
+            appId: "your-app-id"
+        };
+        
+        // Sample data structure for study sets
+        let currentSet = {
+            id: generateId(),
+            title: "",
+            description: "",
+            cards: [
+                { id: generateId(), term: "", definition: "" },
+                { id: generateId(), term: "", definition: "" }
+            ],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            userId: null
+        };
+        
+        // Current card index for flashcard view
+        let currentCardIndex = 0;
+        
+        // All study sets (would be fetched from database in real implementation)
+        const studySets = [
+            {
+                id: "set1",
+                title: "Biology 101: Chapter 3",
+                description: "Key concepts from Chapter 3",
+                cards: [
+                    { id: "card1", term: "Photosynthesis", definition: "The process by which green plants use sunlight to synthesize foods with carbon dioxide and water" },
+                    { id: "card2", term: "Mitochondria", definition: "Organelles in cells that generate energy for the cell" },
+                    { id: "card3", term: "Osmosis", definition: "The movement of water through a semipermeable membrane" }
+                ],
+                createdAt: "2025-02-15T00:00:00.000Z",
+                updatedAt: "2025-03-08T00:00:00.000Z",
+                userId: "user1"
+            },
+            {
+                id: "set2",
+                title: "Spanish Vocabulary",
+                description: "Basic Spanish words and phrases",
+                cards: [
+                    { id: "card4", term: "Hola", definition: "Hello" },
+                    { id: "card5", term: "Adiós", definition: "Goodbye" },
+                    { id: "card6", term: "Buenos días", definition: "Good morning" }
+                ],
+                createdAt: "2025-01-20T00:00:00.000Z",
+                updatedAt: "2025-03-03T00:00:00.000Z",
+                userId: "user1"
+            }
+        ];
+        
+        // Mobile menu toggle
+        mobileMenuBtn.addEventListener('click', () => {
+            nav.classList.toggle('active');
+        });
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (nav.classList.contains('active') && !nav.contains(e.target) && e.target !== mobileMenuBtn) {
+                nav.classList.remove('active');
+            }
+        });
+        
+        // Tab functionality
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons and panes
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabPanes.forEach(p => p.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding pane
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.target).classList.add('active');
+            });
+        });
+        
+        // Add card functionality
+        addCardBtn.addEventListener('click', () => {
+            const cardCount = cardContainer.children.length + 1;
+            const newCardId = generateId();
+            
+            const newCard = document.createElement('div');
+            newCard.className = 'card';
+            newCard.innerHTML = `
+                <div class="card-number">${cardCount}</div>
+                <div class="card-input-group">
+                    <input type="text" placeholder="Term">
+                    <div class="card-tools">
+                        <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                        <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
+                    </div>
+                </div>
+                <div class="card-input-group">
+                    <textarea placeholder="Definition"></textarea>
+                    <div class="card-tools">
+                        <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                        <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
+                    </div>
+                </div>
+                <button class="remove-card-btn"><i class="fas fa-times"></i></button>
+            `;
+            cardContainer.appendChild(newCard);
+            
+            // Add to data structure
+            currentSet.cards.push({ id: newCardId, term: "", definition: "" });
+            
+            // Add event listener to new remove button
+            const removeBtn = newCard.querySelector('.remove-card-btn');
+            removeBtn.addEventListener('click', () => removeCard(newCard));
+            
+            // Focus on the new term input
+            const newTermInput = newCard.querySelector('input');
+            newTermInput.focus();
+        });
+        
+        // Remove card functionality
+        function removeCard(card) {
+            // Don't remove if there's only one card left
+            if (cardContainer.children.length <= 1) {
+                showToast('warning', 'Cannot Remove', 'A study set must have at least one card.');
+                return;
+            }
+            
+            // Get the index of the card
+            const index = Array.from(cardContainer.children).indexOf(card);
+            
+            // Remove from data structure
+            currentSet.cards.splice(index, 1);
+            
+            // Remove from DOM
+            card.remove();
+            
+            // Update card numbers
+            updateCardNumbers();
+        }
+        
+        // Update card numbers after removal
+        function updateCardNumbers() {
+            const cards = cardContainer.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.querySelector('.card-number').textContent = index + 1;
+            });
+        }
+        
+        // Add event listeners to existing remove buttons
+        document.querySelectorAll('.remove-card-btn').forEach(btn => {
+            btn.addEventListener('click', () => removeCard(btn.closest('.card')));
+        });
+        
+        // Create study set functionality
+        createSetBtn.addEventListener('click', () => {
+            // Gather data from inputs
+            currentSet.title = document.querySelector('.set-title').value;
+            currentSet.description = document.querySelector('.set-description').value;
+            
+            // Validate title
+            if (!currentSet.title.trim()) {
+                showToast('error', 'Title Required', 'Please enter a title for your study set.');
+                return;
+            }
+            
+            // Gather card data
+            const cardElements = document.querySelectorAll('.card');
+            currentSet.cards = [];
+            
+            let isValid = true;
+            
+            cardElements.forEach((card, index) => {
+                const termInput = card.querySelector('input');
+                const definitionInput = card.querySelector('textarea');
+                
+                const term = termInput.value.trim();
+                const definition = definitionInput.value.trim();
+                
+                // Validate that cards have content
+                if (!term || !definition) {
+                    isValid = false;
+                    // Highlight empty fields
+                    if (!term) termInput.style.borderColor = 'var(--danger)';
+                    if (!definition) definitionInput.style.borderColor = 'var(--danger)';
+                } else {
+                    termInput.style.borderColor = 'var(--gray-300)';
+                    definitionInput.style.borderColor = 'var(--gray-300)';
+                }
+                
+                currentSet.cards.push({
+                    id: generateId(),
+                    term: term,
+                    definition: definition
+                });
+            });
+            
+            if (!isValid) {
+                showToast('error', 'Incomplete Cards', 'Please fill in all terms and definitions.');
+                return;
+            }
+            
+            // Update timestamps
+            currentSet.updatedAt = new Date().toISOString();
+            
+            // Save to database (mock implementation)
+            saveStudySet(currentSet)
+                .then(() => {
+                    // Show success message
+                    showToast('success', 'Study Set Created', 'Your study set has been saved successfully.');
+                    
+                    // Show study modes
+                    studyModes.style.display = 'block';
+                    
+                    // Scroll to study modes
+                    studyModes.scrollIntoView({ behavior: 'smooth' });
+                })
+                .catch(error => {
+                    showToast('error', 'Save Failed', 'There was an error saving your study set. Please try again.');
+                    console.error('Error saving study set:', error);
+                });
+        });
+        
+        // Mock function to save study set (would use Firebase in real implementation)
+        function saveStudySet(set) {
+            return new Promise((resolve, reject) => {
+                // Simulate network delay
+                setTimeout(() => {
+                    try {
+                        // In a real implementation, this would save to Firebase
+                        console.log('Saving study set:', set);
+                        // Add to local collection for demo purposes
+                        studySets.push(set);
+                        resolve(set);
+                    } catch (error) {
+                        reject(error);
+                    }
+                }, 1000);
+            });
+        }
+        
+        // Flashcard functionality
+        flashcardButton.addEventListener('click', () => {
+            flashcardView.style.display = 'block';
+            updateFlashcard();
+            updateProgress();
+            
+            // Scroll to flashcard view
+            flashcardView.scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        // Flip flashcard
+        flipBtn.addEventListener('click', () => {
+            flashcard.classList.toggle('flipped');
+        });
+        
+        // Click on flashcard to flip
+        flashcard.addEventListener('click', () => {
+            flashcard.classList.toggle('flipped');
+        });
+        
+        // Previous card
+        prevBtn.addEventListener('click', () => {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                updateFlashcard();
+                updateProgress();
+                flashcard.classList.remove('flipped');
+            }
+        });
+        
+        // Next card
+        nextBtn.addEventListener('click', () => {
+            if (currentCardIndex < currentSet.cards.length - 1) {
+                currentCardIndex++;
+                updateFlashcard();
+                updateProgress();
+                flashcard.classList.remove('flipped');
+            } else {
+                // If at the end, show completion message
+                showToast('success', 'Set Complete', 'You have reviewed all cards in this set!');
+            }
+        });
+        
+        // Update flashcard content
+        function updateFlashcard() {
+            const card = currentSet.cards[currentCardIndex];
+            const frontContent = document.querySelector('.flashcard-front .card-content');
+            const backContent = document.querySelector('.flashcard-back .card-content');
+            
+            frontContent.textContent = card.term || "Term";
+            backContent.textContent = card.definition || "Definition";
+            
+            // Update navigation buttons
+            prevBtn.disabled = currentCardIndex === 0;
+            nextBtn.disabled = currentCardIndex === currentSet.cards.length - 1;
+            
+            if (prevBtn.disabled) {
+                prevBtn.classList.add('btn-outline');
+                prevBtn.classList.remove('btn-primary');
+            } else {
+                prevBtn.classList.remove('btn-outline');
+                prevBtn.classList.add('btn-primary');
+            }
+        }
+        
+        // Update progress indicator
+        function updateProgress() {
+            const total = currentSet.cards.length;
+            const current = currentCardIndex + 1;
+            const percentage = (current / total) * 100;
+            
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `Card ${current} of ${total}`;
+        }
+        
+        // Modal functionality
+        loginBtn.addEventListener('click', () => {
+            loginModal.classList.add('show');
+        });
+        
+        signupBtn.addEventListener('click', () => {
+            signupModal.classList.add('show');
+        });
+        
+        [closeLoginModal, cancelLogin].forEach(element => {
+            element.addEventListener('click', () => {
+                loginModal.classList.remove('show');
+            });
+        });
+        
+        [closeSignupModal, cancelSignup].forEach(element => {
+            element.addEventListener('click', () => {
+                signupModal.classList.remove('show');
+            });
+        });
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === loginModal) {
+                loginModal.classList.remove('show');
+            }
+            if (e.target === signupModal) {
+                signupModal.classList.remove('show');
+            }
+        });
+        
+        // Mock login functionality
+        submitLogin.addEventListener('click', () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (!email || !password) {
+                showToast('error', 'Missing Fields', 'Please fill in all required fields.');
+                return;
+            }
+            
+            // Show loading state
+            submitLogin.innerHTML = '<span class="spinner"></span>';
+            submitLogin.disabled = true;
+            
+            // Simulate authentication
+            setTimeout(() => {
+                // In a real app, this would use Firebase Authentication
+                showToast('success', 'Logged In', 'You have been successfully logged in.');
+                loginModal.classList.remove('show');
+                
+                // Reset form and button
+                document.getElementById('login-form').reset();
+                submitLogin.innerHTML = 'Log In';
+                submitLogin.disabled = false;
+                
+                // Update UI to show logged in state
+                updateAuthUI(true, { name: 'Demo User' });
+            }, 1500);
+        });
+        
+        // Mock signup functionality
+        submitSignup.addEventListener('click', () => {
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+            const terms = document.getElementById('terms').checked;
+            
+            if (!name || !email || !password || !confirm) {
+                showToast('error', 'Missing Fields', 'Please fill in all required fields.');
+                return;
+            }
+            
+            if (password !== confirm) {
+                showToast('error', 'Password Mismatch', 'Passwords do not match.');
+                return;
+            }
+            
+            if (!terms) {
+                showToast('error', 'Terms Required', 'You must agree to the Terms of Service.');
+                return;
+            }
+            
+            // Show loading state
+            submitSignup.innerHTML = '<span class="spinner"></span>';
+            submitSignup.disabled = true;
+            
+            // Simulate registration
+            setTimeout(() => {
+                // In a real app, this would use Firebase Authentication
+                showToast('success', 'Account Created', 'Your account has been successfully created.');
+                signupModal.classList.remove('show');
+                
+                // Reset form and button
+                document.getElementById('signup-form').reset();
+                submitSignup.innerHTML = 'Sign Up';
+                submitSignup.disabled = false;
+                
+                // Update UI to show logged in state
+                updateAuthUI(true, { name: name });
+            }, 1500);
+        });
+        
+        // Update UI based on authentication state
+        function updateAuthUI(isLoggedIn, user) {
+            const authButtons = document.querySelector('.auth-buttons');
+            
+            if (isLoggedIn && user) {
+                authButtons.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-weight: 500;">Welcome, ${user.name}</div>
+                        <button class="btn btn-outline" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+                    </div>
+                `;
+                
+                // Add logout event listener
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    // In a real app, this would use Firebase Authentication
+                    showToast('success', 'Logged Out', 'You have been successfully logged out.');
+                    updateAuthUI(false);
+                });
+            } else {
+                authButtons.innerHTML = `
+                    <button class="btn btn-outline" id="login-btn"><i class="fas fa-sign-in-alt"></i> Log In</button>
+                    <button class="btn btn-primary" id="signup-btn"><i class="fas fa-user-plus"></i> Sign Up</button>
+                `;
+                
+                // Re-add event listeners
+                document.getElementById('login-btn').addEventListener('click', () => {
+                    loginModal.classList.add('show');
+                });
+                
+                document.getElementById('signup-btn').addEventListener('click', () => {
+                    signupModal.classList.add('show');
+                });
+            }
+        }
+        
+        // Bulk import functionality
+        // Listen for separator selection change
+        separatorOptions.forEach(option => {
+            option.addEventListener('change', () => {
+                if (option.value === 'custom') {
+                    customSeparator.disabled = false;
+                    customSeparator.focus();
+                } else {
+                    customSeparator.disabled = true;
+                }
+                
+                updateSeparatorPreview();
+            });
+        });
+        
+        // Enable custom separator input when custom is selected
+        customSeparator.addEventListener('input', updateSeparatorPreview);
+        
+        // Update preview when bulk text changes
+        bulkText.addEventListener('input', updateSeparatorPreview);
+        
+        // Function to update separator preview
+        function updateSeparatorPreview() {
+            const text = bulkText.value.trim();
+            
+            if (!text) {
+                separatorPreview.querySelector('.separator-preview-content').innerHTML = '<p>Enter some text to see a preview</p>';
+                return;
+            }
+            
+            // Get selected separator
+            let separator;
+            const selectedSeparator = document.querySelector('input[name="separator"]:checked').value;
+            
+            if (selectedSeparator === 'custom') {
+                separator = customSeparator.value;
+                if (!separator) {
+                    separatorPreview.querySelector('.separator-preview-content').innerHTML = '<p>Enter a custom separator</p>';
+                    return;
+                }
+            } else if (selectedSeparator === 'tab') {
+                separator = '\t';
+            } else {
+                separator = selectedSeparator;
+            }
+            
+            // Split by lines first
+            const lines = text.split(/\r?\n/).filter(line => line.trim());
+            
+            // Preview first 3 lines (or fewer if there are less)
+            const previewLines = lines.slice(0, 3);
+            
+            let previewHTML = '';
+            
+            for (const line of previewLines) {
+                const parts = line.split(separator);
+                
+                if (parts.length >= 2) {
+                    const term = parts[0].trim();
+                    const definition = parts.slice(1).join(separator).trim();
+                    
+                    previewHTML += `
+                        <div class="separator-preview-item">
+                            <div class="separator-preview-term">${term}</div>
+                            <div class="separator-preview-definition">${definition}</div>
+                        </div>
+                    `;
+                } else {
+                    previewHTML += `
+                        <div class="separator-preview-item">
+                            <div style="color: var(--danger);">Could not separate this line: "${line}"</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            if (lines.length > 3) {
+                previewHTML += `<div style="margin-top: 0.5rem; color: var(--text-light);">${lines.length - 3} more items not shown</div>`;
+            }
+            
+            separatorPreview.querySelector('.separator-preview-content').innerHTML = previewHTML;
+        }
+        
+        // Process bulk import
+        bulkImportBtn.addEventListener('click', () => {
+            const text = bulkText.value.trim();
+            
+            if (!text) {
+                showToast('warning', 'No Content', 'Please enter some text to import.');
+                return;
+            }
+            
+            // Get selected separator
+            let separator;
+            const selectedSeparator = document.querySelector('input[name="separator"]:checked').value;
+            
+            if (selectedSeparator === 'custom') {
+                separator = customSeparator.value;
+                if (!separator) {
+                    showToast('error', 'No Separator', 'Please enter a custom separator.');
+                    return;
+                }
+            } else if (selectedSeparator === 'tab') {
+                separator = '\t';
+            } else {
+                separator = selectedSeparator;
+            }
+            
+            // Split by lines
+            const lines = text.split(/\r?\n/).filter(line => line.trim());
+            
+            // Create cards from lines
+            const cards = [];
+            let validLines = 0;
+            
+            for (const line of lines) {
+                const parts = line.split(separator);
+                
+                if (parts.length >= 2) {
+                    const term = parts[0].trim();
+                    const definition = parts.slice(1).join(separator).trim();
+                    
+                    if (term && definition) {
+                        cards.push({
+                            id: generateId(),
+                            term,
+                            definition
+                        });
+                        validLines++;
+                    }
+                }
+            }
+            
+            if (cards.length === 0) {
+                showToast('error', 'No Valid Cards', 'Could not create any valid cards from your text. Please check your format and separator.');
+                return;
+            }
+            
+            // Switch to create tab and populate with imported cards
+            document.querySelector('.tab-btn[data-target="create-tab"]').click();
+            
+            // Clear existing cards
+            cardContainer.innerHTML = '';
+            
+            // Populate with new cards
+            cards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.innerHTML = `
+                    <div class="card-number">${index + 1}</div>
+                    <div class="card-input-group">
+                        <input type="text" placeholder="Term" value="${escapeHtml(card.term)}">
+                        <div class="card-tools">
+                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
+                        </div>
+                    </div>
+                    <div class="card-input-group">
+                        <textarea placeholder="Definition">${escapeHtml(card.definition)}</textarea>
+                        <div class="card-tools">
+                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
+                        </div>
+                    </div>
+                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
+                `;
+                cardContainer.appendChild(cardElement);
+                
+                // Add event listener to remove button
+                const removeBtn = cardElement.querySelector('.remove-card-btn');
+                removeBtn.addEventListener('click', () => removeCard(cardElement));
+            });
+            
+            // Update current set
+            currentSet.cards = cards;
+            
+            // Show success message
+            showToast('success', 'Import Successful', `Created ${validLines} cards from your text.`);
+            
+            // If there were invalid lines, show warning
+            if (validLines < lines.length) {
+                showToast('warning', 'Some Lines Skipped', `${lines.length - validLines} lines could not be processed.`);
+            }
+        });
+        
+        // Quizlet import functionality (mock implementation)
+        quizletImportBtn.addEventListener('click', () => {
+            const quizletUrl = document.querySelector('#import-tab input').value.trim();
+            
+            if (!quizletUrl) {
+                showToast('warning', 'No URL', 'Please enter a Quizlet URL to import.');
+                return;
+            }
+            
+            // Show loading state
+            quizletImportBtn.innerHTML = '<span class="spinner"></span> Importing...';
+            quizletImportBtn.disabled = true;
+            
+            // Simulate import process
+            setTimeout(() => {
+                // This is a mock implementation - in reality, you would fetch and parse the Quizlet content
+                const mockImportedSet = {
+                    title: "Imported Quizlet Set",
+                    description: "Imported from Quizlet",
+                    cards: [
+                        { id: generateId(), term: "Photosynthesis", definition: "The process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water." },
+                        { id: generateId(), term: "Mitochondria", definition: "An organelle found in large numbers in most cells, in which the biochemical processes of respiration and energy production occur." },
+                        { id: generateId(), term: "Nucleus", definition: "A central organelle containing the cell's genetic material." },
+                        { id: generateId(), term: "Osmosis", definition: "The process by which molecules of a solvent tend to pass through a semipermeable membrane from a less concentrated solution into a more concentrated one." }
+                    ]
+                };
+                
+                // Switch to create tab
+                document.querySelector('.tab-btn[data-target="create-tab"]').click();
+                
+                // Update the current set with imported data
+                currentSet.title = mockImportedSet.title;
+                currentSet.description = mockImportedSet.description;
+                currentSet.cards = mockImportedSet.cards;
+                
+                // Update the UI with the imported data
+                document.querySelector('.set-title').value = currentSet.title;
+                document.querySelector('.set-description').value = currentSet.description;
+                
+                // Clear existing cards
+                cardContainer.innerHTML = '';
+                
+                // Add imported cards to UI
+                currentSet.cards.forEach((card, index) => {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = 'card';
+                    cardElement.innerHTML = `
+                        <div class="card-number">${index + 1}</div>
+                        <div class="card-input-group">
+                            <input type="text" placeholder="Term" value="${escapeHtml(card.term)}">
+                            <div class="card-tools">
+                                <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
+                            </div>
+                        </div>
+                        <div class="card-input-group">
+                            <textarea placeholder="Definition">${escapeHtml(card.definition)}</textarea>
+                            <div class="card-tools">
+                                <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
+                            </div>
+                        </div>
+                        <button class="remove-card-btn"><i class="fas fa-times"></i></button>
+                    `;
+                    cardContainer.appendChild(cardElement);
+                    
+                    // Add event listener to remove button
+                    const removeBtn = cardElement.querySelector('.remove-card-btn');
+                    removeBtn.addEventListener('click', () => removeCard(cardElement));
+                });
+                
+                // Reset button
+                quizletImportBtn.innerHTML = '<i class="fas fa-file-import"></i> Import from Quizlet';
+                quizletImportBtn.disabled = false;
+                
+                // Show success message
+                showToast('success', 'Import Successful', 'Quizlet set imported successfully.');
+            }, 2000);
+        });
+        
+        // Helper function to generate IDs
+        function generateId() {
+            return Math.random().toString(36).substr(2, 9);
+        }
+        
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+        
+        // Toast notification function
+        function showToast(type, title, message) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon;
+            switch(type) {
+                case 'success':
+                    icon = 'check';
+                    break;
+                case 'error':
+                    icon = 'times';
+                    break;
+                case 'warning':
+                    icon = 'exclamation';
+                    break;
+                default:
+                    icon = 'info';
+            }
+            
+            toast.innerHTML = `
+                <div class="toast-icon"><i class="fas fa-${icon}"></i></div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close"><i class="fas fa-times"></i></button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Add event listener to close button
+            toast.querySelector('.toast-close').addEventListener('click', () => {
+                toast.style.animation = 'slideOut 0.3s forwards';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            });
+            
+            // Auto close after 5 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.style.animation = 'slideOut 0.3s forwards';
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 300);
+                }
+            }, 5000);
+        }
+        
+        // Initialize database (Firebase in real implementation)
+        function initializeDatabase() {
+            // In a real implementation, this would initialize Firebase
+            // firebase.initializeApp(firebaseConfig);
+            console.log('Database initialized');
+        }
+        
+        // Function to handle data persistence
+        function syncWithDatabase() {
+            // In a real implementation, this would sync with Firebase Firestore
+            // For demo purposes, we'll just log to console
+            console.log('Syncing with database');
+        }
+        
+        // Authentication state observer (Firebase in real implementation)
+        function authStateObserver() {
+            // In a real implementation, this would use Firebase Authentication
+            // For demo purposes, we'll just initialize as logged out
+            updateAuthUI(false);
+        }
+        
+        // Document ready function
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the application
+            initializeDatabase();
+            authStateObserver();
+            
+            // Show welcome message
+            showToast('success', 'Welcome to GitHut', 'Create and study flashcards for free!');
+        });
+    </script>
+</body>
+</html>
