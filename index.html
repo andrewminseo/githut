@@ -21,7 +21,790 @@ if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
             currentWriteSession = {
                 setId: studySet.id,
                 title: studySet.title,
-                            showToast('warning', 'No Questions Found', `There are no ${selectedType} questions in this set.`);
+                cards: writeCards,
+                currentIndex: 0,
+                correctCount: 0,
+                answeredCount: 0
+            };
+            
+            // Hide other views
+            flashcardView.style.display = 'none';
+            if (document.getElementById('learn-view')) {
+                document.getElementById('learn-view').style.display = 'none';
+            }
+            if (document.getElementById('test-view')) {
+                document.getElementById('test-view').style.display = 'none';
+            }
+            if (document.getElementById('match-view')) {
+                document.getElementById('match-view').style.display = 'none';
+            }
+            
+            // Update header
+            writeView.querySelector('.flashcard-header h2').textContent = studySet.title;
+            
+            // Reset UI
+            document.getElementById('write-container').style.display = 'block';
+            document.getElementById('write-summary').style.display = 'none';
+            document.getElementById('write-feedback').style.display = 'none';
+            document.getElementById('write-answer').value = '';
+            document.getElementById('write-check-btn').disabled = false;
+            document.getElementById('write-next-btn').disabled = true;
+            
+            // Show write view
+            writeView.style.display = 'block';
+            
+            // Update first card
+            updateWriteCard();
+            
+            // Scroll to write view
+            writeView.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Write mode variables
+        let currentWriteSession = null;
+        
+        // Function to update write card
+        function updateWriteCard() {
+            if (!currentWriteSession || !currentWriteSession.cards.length) return;
+            
+            const card = currentWriteSession.cards[currentWriteSession.currentIndex];
+            
+            // Update term
+            document.getElementById('write-term').textContent = card.term;
+            
+            // Clear feedback
+            document.getElementById('write-feedback').style.display = 'none';
+            
+            // Clear answer field
+            document.getElementById('write-answer').value = '';
+            document.getElementById('write-answer').disabled = false;
+            
+            // Focus on answer field
+            document.getElementById('write-answer').focus();
+            
+            // Update buttons
+            document.getElementById('write-check-btn').disabled = false;
+            document.getElementById('write-next-btn').disabled = true;
+            
+            // Update progress
+            updateWriteProgress();
+        }
+        
+        // Function to update write progress
+        function updateWriteProgress() {
+            if (!currentWriteSession) return;
+            
+            const total = currentWriteSession.cards.length;
+            const answered = currentWriteSession.answeredCount;
+            const percentage = (answered / total) * 100;
+            
+            const progressFill = document.getElementById('write-progress-fill');
+            const progressText = document.getElementById('write-progress-text');
+            
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `${answered} of ${total} answered`;
+        }
+        
+        // Function to check write answer
+        function checkWriteAnswer() {
+            if (!currentWriteSession) return;
+            
+            const card = currentWriteSession.cards[currentWriteSession.currentIndex];
+            const userAnswer = document.getElementById('write-answer').value.trim();
+            
+            if (!userAnswer) {
+                showToast('warning', 'Empty Answer', 'Please type an answer before checking.');
+                return;
+            }
+            
+            // Check similarity with correct answer
+            const isCorrect = checkAnswerSimilarity(userAnswer, card.definition);
+            
+            // Update card state
+            card.answered = true;
+            card.isCorrect = isCorrect;
+            card.userAnswer = userAnswer;
+            
+            // Update session stats
+            currentWriteSession.answeredCount++;
+            if (isCorrect) {
+                currentWriteSession.correctCount++;
+            }
+            
+            // Show feedback
+            const feedbackElement = document.getElementById('write-feedback');
+            const feedbackMessage = document.getElementById('write-feedback-message');
+            const correctAnswer = document.getElementById('write-correct-answer');
+            
+            feedbackElement.style.display = 'block';
+            
+            if (isCorrect) {
+                feedbackElement.style.backgroundColor = 'rgba(66, 185, 131, 0.1)';
+                feedbackElement.style.borderLeft = '4px solid var(--success)';
+                feedbackMessage.innerHTML = '<i class="fas fa-check-circle" style="color: var(--success);"></i> Correct!';
+                correctAnswer.style.display = 'none';
+            } else {
+                feedbackElement.style.backgroundColor = 'rgba(255, 82, 82, 0.1)';
+                feedbackElement.style.borderLeft = '4px solid var(--danger)';
+                feedbackMessage.innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger);"></i> Incorrect';
+                
+                correctAnswer.style.display = 'block';
+                correctAnswer.innerHTML = `
+                    <div style="font-weight: 500;">Correct Answer:</div>
+                    <div style="padding: 0.5rem; background-color: rgba(66, 185, 131, 0.1); border-radius: var(--border-radius);">
+                        ${card.definition}
+                    </div>
+                `;
+            }
+            
+            // Disable answer field and check button
+            document.getElementById('write-answer').disabled = true;
+            document.getElementById('write-check-btn').disabled = true;
+            
+            // Enable next button
+            document.getElementById('write-next-btn').disabled = false;
+            
+            // If all cards answered, enable finish button
+            if (currentWriteSession.answeredCount === currentWriteSession.cards.length) {
+                document.getElementById('write-next-btn').textContent = 'Finish';
+            }
+            
+            // Update progress
+            updateWriteProgress();
+        }
+        
+        // Function to skip write card
+        function skipWriteCard() {
+            if (!currentWriteSession) return;
+            
+            const card = currentWriteSession.cards[currentWriteSession.currentIndex];
+            
+            // Mark as answered but incorrect
+            card.answered = true;
+            card.isCorrect = false;
+            card.userAnswer = '[Skipped]';
+            
+            // Update session stats
+            currentWriteSession.answeredCount++;
+            
+            // Check if all cards answered
+            if (currentWriteSession.answeredCount === currentWriteSession.cards.length) {
+                showWriteSummary();
+                return;
+            }
+            
+            // Go to next card
+            currentWriteSession.currentIndex++;
+            updateWriteCard();
+        }
+        
+        // Function to go to next write card
+        function nextWriteCard() {
+            if (!currentWriteSession) return;
+            
+            // If all cards answered, show summary
+            if (currentWriteSession.answeredCount === currentWriteSession.cards.length) {
+                showWriteSummary();
+                return;
+            }
+            
+            // Go to next card
+            currentWriteSession.currentIndex++;
+            updateWriteCard();
+        }
+        
+        // Function to show write summary
+        function showWriteSummary() {
+            if (!currentWriteSession) return;
+            
+            const correctCount = currentWriteSession.correctCount;
+            const totalCount = currentWriteSession.cards.length;
+            const percentage = Math.round((correctCount / totalCount) * 100);
+            
+            // Update summary
+            document.getElementById('write-score-percentage').textContent = percentage;
+            document.getElementById('write-correct-count').textContent = correctCount;
+            document.getElementById('write-total-count').textContent = totalCount;
+            
+            // Hide writer and show summary
+            document.getElementById('write-container').style.display = 'none';
+            document.querySelector('.write-controls').style.display = 'none';
+            document.getElementById('write-summary').style.display = 'block';
+            
+            // Save results
+            saveWriteResults();
+        }
+        
+        // Function to save write results
+        function saveWriteResults() {
+            if (!currentWriteSession) return;
+            
+            // Find original study set
+            const studySet = studySets.find(set => set.id === currentWriteSession.setId);
+            if (!studySet) return;
+            
+            // Create write result record
+            const writeResult = {
+                id: generateId(),
+                timestamp: new Date().toISOString(),
+                correctCount: currentWriteSession.correctCount,
+                totalCount: currentWriteSession.cards.length,
+                percentage: Math.round((currentWriteSession.correctCount / currentWriteSession.cards.length) * 100),
+                cardResults: currentWriteSession.cards.map(card => ({
+                    cardId: card.id,
+                    term: card.term,
+                    isCorrect: card.isCorrect,
+                    userAnswer: card.userAnswer
+                }))
+            };
+            
+            // Add to set history
+            if (!studySet.writeHistory) {
+                studySet.writeHistory = [];
+            }
+            
+            studySet.writeHistory.push(writeResult);
+            
+            // Update card mastery based on results
+            currentWriteSession.cards.forEach(writeCard => {
+                const card = studySet.cards.find(c => c.id === writeCard.id);
+                if (card) {
+                    const oldMastery = card.mastery || 0;
+                    
+                    if (writeCard.isCorrect) {
+                        card.mastery = Math.min(1, oldMastery + 0.2);
+                    } else {
+                        card.mastery = Math.max(0, oldMastery - 0.1);
+                    }
+                    
+                    card.lastReviewed = new Date().toISOString();
+                }
+            });
+            
+            // Save updated set
+            saveStudySet(studySet).catch(error => {
+                console.error('Failed to save write results:', error);
+            });
+        }
+        
+        // SPELL MODE IMPLEMENTATION
+        function initSpellMode(studySet) {
+            // Create spell mode view if not exists
+            let spellView = document.getElementById('spell-view');
+            
+            if (!spellView) {
+                spellView = document.createElement('section');
+                spellView.id = 'spell-view';
+                spellView.className = 'flashcard-view';
+                spellView.style.display = 'none';
+                
+                spellView.innerHTML = `
+                    <div class="flashcard-header">
+                        <h2></h2>
+                        <div class="flashcard-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="spell-progress-fill"></div>
+                            </div>
+                            <span class="progress-text" id="spell-progress-text"></span>
+                        </div>
+                    </div>
+                    
+                    <div id="spell-container" style="background-color: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow-md); margin-bottom: 2rem;">
+                        <div id="spell-prompt" style="font-size: 1.2rem; margin-bottom: 1.5rem;">
+                            Listen to the audio and type the term:
+                        </div>
+                        <div style="margin-bottom: 1.5rem; text-align: center;">
+                            <button id="play-audio-btn" class="btn btn-outline" style="padding: 1rem; font-size: 1.5rem;">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                            <div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-light);">
+                                Click to play or press spacebar
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <input type="text" id="spell-answer" style="width: 100%; padding: 1rem; border: 1px solid var(--gray-300); border-radius: var(--border-radius); font-size: 1.2rem;" placeholder="Type what you hear...">
+                        </div>
+                        <div id="spell-feedback" style="margin-top: 1rem; padding: 1rem; border-radius: var(--border-radius); display: none;">
+                            <div id="spell-feedback-message"></div>
+                            <div id="spell-correct-answer" style="margin-top: 0.5rem; display: none;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="spell-controls" style="display: flex; justify-content: space-between; align-items: center;">
+                        <button class="btn btn-outline" id="spell-skip-btn">
+                            <i class="fas fa-forward"></i> Skip
+                        </button>
+                        <button class="btn btn-primary" id="spell-check-btn">
+                            <i class="fas fa-check"></i> Check Spelling
+                        </button>
+                        <button class="btn btn-primary" id="spell-next-btn" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="spell-summary" style="display: none; margin-top: 2rem; background-color: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow-md); text-align: center;">
+                        <h3 style="margin-bottom: 1.5rem;">Spelling Practice Complete!</h3>
+                        <div style="margin-bottom: 2rem;">
+                            <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;">
+                                <span id="spell-score-percentage">0</span>%
+                            </div>
+                            <div style="color: var(--text-light);">
+                                <span id="spell-correct-count">0</span> of <span id="spell-total-count">0</span> correct
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: center; gap: 1rem;">
+                            <button class="btn btn-primary" id="restart-spell-btn">
+                                <i class="fas fa-redo"></i> Practice Again
+                            </button>
+                            <button class="btn btn-outline" id="exit-spell-btn">
+                                <i class="fas fa-arrow-left"></i> Back to Study Modes
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add to DOM
+                const writeView = document.getElementById('write-view');
+                if (writeView) {
+                    writeView.parentNode.insertBefore(spellView, writeView.nextSibling);
+                } else {
+                    const matchView = document.getElementById('match-view');
+                    if (matchView) {
+                        matchView.parentNode.insertBefore(spellView, matchView.nextSibling);
+                    } else {
+                        flashcardView.parentNode.insertBefore(spellView, flashcardView.nextSibling);
+                    }
+                }
+                
+                // Add event listeners
+                document.getElementById('play-audio-btn').addEventListener('click', playSpellAudio);
+                document.getElementById('spell-check-btn').addEventListener('click', checkSpellAnswer);
+                document.getElementById('spell-next-btn').addEventListener('click', nextSpellCard);
+                document.getElementById('spell-skip-btn').addEventListener('click', skipSpellCard);
+                document.getElementById('restart-spell-btn').addEventListener('click', () => initSpellMode(studySet));
+                document.getElementById('exit-spell-btn').addEventListener('click', () => {
+                    spellView.style.display = 'none';
+                    studyModes.style.display = 'block';
+                    studyModes.scrollIntoView({ behavior: 'smooth' });
+                });
+                
+                // Keyboard shortcuts
+                document.getElementById('spell-answer').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        checkSpellAnswer();
+                    }
+                });
+                
+                // Spacebar to play audio
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === ' ' && document.getElementById('spell-view').style.display !== 'none') {
+                        if (document.activeElement !== document.getElementById('spell-answer')) {
+                            e.preventDefault();
+                            playSpellAudio();
+                        }
+                    }
+                });
+            }
+            
+            // Update document title
+            document.title = `Spell: ${studySet.title} | GitHut`;
+            
+            // Filter cards that are suitable for spelling (not too long)
+            const spellableCards = studySet.cards.filter(card => 
+                card.term.length > 1 && 
+                card.term.length <= 20 && 
+                !/[^a-zA-Z0-9\s\-']/.test(card.term) // Only allow letters, numbers, spaces, hyphens, apostrophes
+            );
+            
+            if (spellableCards.length < 3) {
+                showToast('error', 'Not Enough Cards', 'You need at least 3 suitable cards for spelling practice. Some terms may be too long or contain special characters.');
+                return;
+            }
+            
+            // Prepare cards for spelling practice
+            const spellCards = spellableCards.map(card => ({
+                ...card,
+                answered: false,
+                isCorrect: false
+            }));
+            
+            // Shuffle cards
+            shuffleArray(spellCards);
+            
+            // Set as current spell session
+            currentSpellSession = {
+                setId: studySet.id,
+                title: studySet.title,
+                cards: spellCards,
+                currentIndex: 0,
+                correctCount: 0,
+                answeredCount: 0
+            };
+            
+            // Hide other views
+            flashcardView.style.display = 'none';
+            if (document.getElementById('learn-view')) {
+                document.getElementById('learn-view').style.display = 'none';
+            }
+            if (document.getElementById('test-view')) {
+                document.getElementById('test-view').style.display = 'none';
+            }
+            if (document.getElementById('match-view')) {
+                document.getElementById('match-view').style.display = 'none';
+            }
+            if (document.getElementById('write-view')) {
+                document.getElementById('write-view').style.display = 'none';
+            }
+            
+            // Update header
+            spellView.querySelector('.flashcard-header h2').textContent = studySet.title;
+            
+            // Reset UI
+            document.getElementById('spell-container').style.display = 'block';
+            document.getElementById('spell-summary').style.display = 'none';
+            document.getElementById('spell-feedback').style.display = 'none';
+            document.getElementById('spell-answer').value = '';
+            document.getElementById('spell-check-btn').disabled = false;
+            document.getElementById('spell-next-btn').disabled = true;
+            
+            // Show spell view
+            spellView.style.display = 'block';
+            
+            // Update first card
+            updateSpellCard();
+            
+            // Scroll to spell view
+            spellView.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Spell mode variables
+        let currentSpellSession = null;
+        let speechSynthesis = window.speechSynthesis;
+        
+        // Function to update spell card
+        function updateSpellCard() {
+            if (!currentSpellSession || !currentSpellSession.cards.length) return;
+            
+            // Clear feedback
+            document.getElementById('spell-feedback').style.display = 'none';
+            
+            // Clear answer field
+            document.getElementById('spell-answer').value = '';
+            document.getElementById('spell-answer').disabled = false;
+            
+            // Update buttons
+            document.getElementById('spell-check-btn').disabled = false;
+            document.getElementById('spell-next-btn').disabled = true;
+            
+            // Update progress
+            updateSpellProgress();
+            
+            // Play audio after a short delay
+            setTimeout(playSpellAudio, 500);
+        }
+        
+        // Function to play spell audio
+        function playSpellAudio() {
+            if (!currentSpellSession) return;
+            
+            const card = currentSpellSession.cards[currentSpellSession.currentIndex];
+            
+            // Cancel any ongoing speech
+            speechSynthesis.cancel();
+            
+            // Create speech utterance
+            const utterance = new SpeechSynthesisUtterance(card.term);
+            utterance.rate = 0.9; // Slightly slower than normal
+            
+            // Speak
+            speechSynthesis.speak(utterance);
+            
+            // Focus on answer field
+            document.getElementById('spell-answer').focus();
+        }
+        
+        // Function to update spell progress
+        function updateSpellProgress() {
+            if (!currentSpellSession) return;
+            
+            const total = currentSpellSession.cards.length;
+            const answered = currentSpellSession.answeredCount;
+            const percentage = (answered / total) * 100;
+            
+            const progressFill = document.getElementById('spell-progress-fill');
+            const progressText = document.getElementById('spell-progress-text');
+            
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `${answered} of ${total} answered`;
+        }
+        
+        // Function to check spell answer
+        function checkSpellAnswer() {
+            if (!currentSpellSession) return;
+            
+            const card = currentSpellSession.cards[currentSpellSession.currentIndex];
+            const userAnswer = document.getElementById('spell-answer').value.trim();
+            
+            if (!userAnswer) {
+                showToast('warning', 'Empty Answer', 'Please type an answer before checking.');
+                return;
+            }
+            
+            // Check spelling
+            const isCorrect = checkSpellingSimilarity(userAnswer, card.term);
+            
+            // Update card state
+            card.answered = true;
+            card.isCorrect = isCorrect;
+            card.userAnswer = userAnswer;
+            
+            // Update session stats
+            currentSpellSession.answeredCount++;
+            if (isCorrect) {
+                currentSpellSession.correctCount++;
+            }
+            
+            // Show feedback
+            const feedbackElement = document.getElementById('spell-feedback');
+            const feedbackMessage = document.getElementById('spell-feedback-message');
+            const correctAnswer = document.getElementById('spell-correct-answer');
+            
+            feedbackElement.style.display = 'block';
+            
+            if (isCorrect) {
+                feedbackElement.style.backgroundColor = 'rgba(66, 185, 131, 0.1)';
+                feedbackElement.style.borderLeft = '4px solid var(--success)';
+                feedbackMessage.innerHTML = '<i class="fas fa-check-circle" style="color: var(--success);"></i> Correct!';
+                correctAnswer.style.display = 'none';
+            } else {
+                feedbackElement.style.backgroundColor = 'rgba(255, 82, 82, 0.1)';
+                feedbackElement.style.borderLeft = '4px solid var(--danger)';
+                feedbackMessage.innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger);"></i> Incorrect';
+                
+                correctAnswer.style.display = 'block';
+                correctAnswer.innerHTML = `
+                    <div style="font-weight: 500;">Correct Spelling:</div>
+                    <div style="padding: 0.5rem; background-color: rgba(66, 185, 131, 0.1); border-radius: var(--border-radius); font-size: 1.2rem;">
+                        ${card.term}
+                    </div>
+                `;
+            }
+            
+            // Disable answer field and check button
+            document.getElementById('spell-answer').disabled = true;
+            document.getElementById('spell-check-btn').disabled = true;
+            
+            // Enable next button
+            document.getElementById('spell-next-btn').disabled = false;
+            
+            // If all cards answered, enable finish button
+            if (currentSpellSession.answeredCount === currentSpellSession.cards.length) {
+                document.getElementById('spell-next-btn').textContent = 'Finish';
+            }
+            
+            // Update progress
+            updateSpellProgress();
+        }
+        
+        // Function to check spelling similarity
+        function checkSpellingSimilarity(userAnswer, correctAnswer) {
+            // Convert to lowercase for comparison
+            userAnswer = userAnswer.toLowerCase();
+            correctAnswer = correctAnswer.toLowerCase();
+            
+            // Exact match
+            if (userAnswer === correctAnswer) return true;
+            
+            // Calculate Levenshtein distance (edit distance)
+            const distance = levenshteinDistance(userAnswer, correctAnswer);
+            
+            // Allow small errors based on length
+            const maxAllowedError = Math.max(1, Math.floor(correctAnswer.length / 10));
+            
+            return distance <= maxAllowedError;
+        }
+        
+        // Levenshtein distance calculation
+        function levenshteinDistance(a, b) {
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
+            
+            const matrix = [];
+            
+            // Initialize matrix
+            for (let i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+            
+            for (let j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+            
+            // Fill matrix
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    const cost = a[j - 1] === b[i - 1] ? 0 : 1;
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j] + 1, // deletion
+                        matrix[i][j - 1] + 1, // insertion
+                        matrix[i - 1][j - 1] + cost // substitution
+                    );
+                }
+            }
+            
+            return matrix[b.length][a.length];
+        }
+        
+        // Function to skip spell card
+        function skipSpellCard() {
+            if (!currentSpellSession) return;
+            
+            const card = currentSpellSession.cards[currentSpellSession.currentIndex];
+            
+            // Mark as answered but incorrect
+            card.answered = true;
+            card.isCorrect = false;
+            card.userAnswer = '[Skipped]';
+            
+            // Update session stats
+            currentSpellSession.answeredCount++;
+            
+            // Check if all cards answered
+            if (currentSpellSession.answeredCount === currentSpellSession.cards.length) {
+                showSpellSummary();
+                return;
+            }
+            
+            // Go to next card
+            currentSpellSession.currentIndex++;
+            updateSpellCard();
+        }
+        
+        // Function to go to next spell card
+        function nextSpellCard() {
+            if (!currentSpellSession) return;
+            
+            // If all cards answered, show summary
+            if (currentSpellSession.answeredCount === currentSpellSession.cards.length) {
+                showSpellSummary();
+                return;
+            }
+            
+            // Go to next card
+            currentSpellSession.currentIndex++;
+            updateSpellCard();
+        }
+        
+        // Function to show spell summary
+        function showSpellSummary() {
+            if (!currentSpellSession) return;
+            
+            const correctCount = currentSpellSession.correctCount;
+            const totalCount = currentSpellSession.cards.length;
+            const percentage = Math.round((correctCount / totalCount) * 100);
+            
+            // Update summary
+            document.getElementById('spell-score-percentage').textContent = percentage;
+            document.getElementById('spell-correct-count').textContent = correctCount;
+            document.getElementById('spell-total-count').textContent = totalCount;
+            
+            // Hide speller and show summary
+            document.getElementById('spell-container').style.display = 'none';
+            document.querySelector('.spell-controls').style.display = 'none';
+            document.getElementById('spell-summary').style.display = 'block';
+            
+            // Save results
+            saveSpellResults();
+        }
+        
+        // Function to save spell results
+        function saveSpellResults() {
+            if (!currentSpellSession) return;
+            
+            // Find original study set
+            const studySet = studySets.find(set => set.id === currentSpellSession.setId);
+            if (!studySet) return;
+            
+            // Create spell result record
+            const spellResult = {
+                id: generateId(),
+                timestamp: new Date().toISOString(),
+                correctCount: currentSpellSession.correctCount,
+                totalCount: currentSpellSession.cards.length,
+                percentage: Math.round((currentSpellSession.correctCount / currentSpellSession.cards.length) * 100),
+                cardResults: currentSpellSession.cards.map(card => ({
+                    cardId: card.id,
+                    term: card.term,
+                    isCorrect: card.isCorrect,
+                    userAnswer: card.userAnswer
+                }))
+            };
+            
+            // Add to set history
+            if (!studySet.spellHistory) {
+                studySet.spellHistory = [];
+            }
+            
+            studySet.spellHistory.push(spellResult);
+            
+            // Update card mastery based on results
+            currentSpellSession.cards.forEach(spellCard => {
+                const card = studySet.cards.find(c => c.id === spellCard.id);
+                if (card) {
+                    const oldMastery = card.mastery || 0;
+                    
+                    if (spellCard.isCorrect) {
+                        card.mastery = Math.min(1, oldMastery + 0.15);
+                    } else {
+                        card.mastery = Math.max(0, oldMastery - 0.1);
+                    }
+                    
+                    card.lastReviewed = new Date().toISOString();
+                }
+            });
+            
+            // Save updated set
+            saveStudySet(studySet).catch(error => {
+                console.error('Failed to save spell results:', error);
+            });
+        }
+        
+        // Mode selection event listeners
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mode = btn.querySelector('h4').textContent.toLowerCase();
+                startStudyMode(mode, currentSet);
+            });
+        });
+        
+        // Initialize document event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the application
+            initializeDatabase();
+            authStateObserver();
+            
+            // Check for URL parameters (shared sets)
+            const urlParams = new URLSearchParams(window.location.search);
+            const sharedSetId = urlParams.get('set');
+            
+            if (sharedSetId) {
+                // Load shared set
+                const set = studySets.find(s => s.id === sharedSetId);
+                
+                if (set) {
+                    // Open the shared set
+                    openStudySet(set.id);
+                } else {
+                    showToast('error', 'Set Not Found', 'The shared study set could not be found.');
+                }
+            }
+            
+            // Show welcome message
+            showToast('success', 'Welcome to GitHut', 'Create and study flashcards for free!');
+        });
+    </script>
+</body>
+</html>                showToast('warning', 'No Questions Found', `There are no ${selectedType} questions in this set.`);
                 typeSelect.value = 'all';
                 return;
             }
