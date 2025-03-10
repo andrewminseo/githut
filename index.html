@@ -91,7 +91,607 @@ background: none;
                 left: -100%;
                 width: 70%;
                 height: 100vh;
-                backg<!DOCTYPE html>
+                background-color: var(--white);
+                z-index: 1000;
+                transition: var(--transition);
+                box-shadow: var(--shadow-lg);
+                padding: 2rem;
+            }
+
+            nav.active {
+                left: 0;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .card-number {
+                position: static;
+                transform: none;
+                margin-bottom: 0.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .action-buttons-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .action-buttons-group .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .section-title {
+                font-size: 1.6rem;
+            }
+
+            .feature-card {
+                padding: 1.5rem 1rem;
+            }
+
+            .mode-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                GitHut
+            </div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav id="nav">
+                <ul>
+                    <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#library"><i class="fas fa-book"></i> Library</a></li>
+                    <li><a href="#create"><i class="fas fa-plus-circle"></i> Create</a></li>
+                    <li><a href="#"><i class="fas fa-info-circle"></i> About</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <button class="btn btn-outline" id="login-btn"><i class="fas fa-sign-in-alt"></i> Log In</button>
+                <button class="btn btn-primary" id="signup-btn"><i class="fas fa-user-plus"></i> Sign Up</button>
+            </div>
+        </div>
+    </header>
+    
+    <main>
+        <section class="hero">
+            <h1>Study Smarter, Not Harder</h1>
+            <p>Create, share, and study flashcards for free - without any limitations</p>
+            <div class="search-box">
+                <input type="text" placeholder="Search for study sets, classes, or users...">
+                <button><i class="fas fa-search"></i> Search</button>
+            </div>
+        </section>
+        
+        <section class="features">
+            <div class="feature-card">
+                <i class="fas fa-edit"></i>
+                <h3>Create Flashcards</h3>
+                <p>Make your own custom study sets with unlimited cards, images, and formatting options</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-file-import"></i>
+                <h3>Bulk Import</h3>
+                <p>Easily convert unformatted text to flashcards or import from other platforms like Quizlet</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-graduation-cap"></i>
+                <h3>Multiple Study Modes</h3>
+                <p>Learn with flashcards, practice tests, matching games, and more - all for free</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-cloud"></i>
+                <h3>Cloud Storage</h3>
+                <p>Access your study sets from anywhere with secure cloud storage and synchronization</p>
+            </div>
+        </section>
+        
+        <section class="tabs">
+            <div class="tab-nav">
+                <button class="tab-btn active" data-target="create-tab">Create Cards</button>
+                <button class="tab-btn" data-target="bulk-tab">Bulk Import</button>
+                <button class="tab-btn" data-target="import-tab">Import from Quizlet</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Create Cards Tab -->
+                <div class="tab-pane active" id="create-tab">
+                    <div class="create-set">
+                        <div class="study-set">
+                            <input type="text" class="set-title" placeholder="Enter a title for your study set...">
+                            <textarea class="set-description" placeholder="Add a description (optional)..."></textarea>
+                            
+                            <div class="card-container">
+                                <div class="card">
+                                    <div class="card-number">1</div>
+                                    <div class="card-input-group">
+                                        <input type="text" placeholder="Term">
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-input-group">
+                                        <textarea placeholder="Definition"></textarea>
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
+                                        </div>
+                                    </div>
+                                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-number">2</div>
+                                    <div class="card-input-group">
+                                        <input type="text" placeholder="Term">
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-input-group">
+                                        <textarea placeholder="Definition"></textarea>
+                                        <div class="card-tools">
+                                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
+                                        </div>
+                                    </div>
+                                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            
+                            <button class="add-card" id="add-card-btn">
+                                <i class="fas fa-plus"></i> Add Card
+                            </button>
+                            
+                            <div class="action-buttons">
+                                <div class="action-buttons-group">
+                                    <button class="btn btn-outline"><i class="fas fa-cog"></i> Settings</button>
+                                </div>
+                                <div class="action-buttons-group">
+                                    <button class="btn btn-outline"><i class="fas fa-save"></i> Save Draft</button>
+                                    <button class="btn btn-primary" id="create-set-btn"><i class="fas fa-check"></i> Create Study Set</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bulk Import Tab -->
+                <div class="tab-pane" id="bulk-tab">
+                    <div class="bulk-import-container">
+                        <p>Paste your content below. Our smart system will automatically detect terms and definitions.</p>
+                        <textarea class="bulk-text" placeholder="Example:
+Photosynthesis - The process by which green plants use sunlight to synthesize foods with carbon dioxide and water
+Mitochondria - Organelles in cells that generate energy for the cell
+Osmosis - The movement of water through a semipermeable membrane"></textarea>
+                        
+                        <div class="separator-options">
+                            <p>Separator between term and definition:</p>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-dash" name="separator" value="-" checked>
+                                <label for="separator-dash">Dash (-)</label>
+                            </div>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-colon" name="separator" value=":">
+                                <label for="separator-colon">Colon (:)</label>
+                            </div>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-tab" name="separator" value="tab">
+                                <label for="separator-tab">Tab</label>
+                            </div>
+                            <div class="separator-option">
+                                <input type="radio" id="separator-custom" name="separator" value="custom">
+                                <label for="separator-custom">Custom:</label>
+                                <input type="text" id="custom-separator" placeholder="Enter custom separator" disabled>
+                            </div>
+                        </div>
+                        
+                        <div class="separator-preview" id="separator-preview">
+                            <h4>Preview:</h4>
+                            <div class="separator-preview-content">
+                                <!-- Preview content will be inserted here -->
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <div class="action-buttons-group">
+                                <button class="btn btn-outline"><i class="fas fa-undo"></i> Clear</button>
+                            </div>
+                            <div class="action-buttons-group">
+                                <button class="btn btn-primary" id="bulk-import-btn"><i class="fas fa-file-import"></i> Create Cards from Text</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Import from Quizlet Tab -->
+                <div class="tab-pane" id="import-tab">
+                    <div class="import-container">
+                        <p>Enter the URL of the Quizlet set you want to import:</p>
+                        <input type="text" class="set-title" placeholder="https://quizlet.com/123456789/example-set-flash-cards/">
+                        
+                        <div class="action-buttons">
+                            <div class="action-buttons-group">
+                                <button class="btn btn-outline"><i class="fas fa-question-circle"></i> Help</button>
+                            </div>
+                            <div class="action-buttons-group">
+                                <button class="btn btn-primary" id="quizlet-import-btn"><i class="fas fa-file-import"></i> Import from Quizlet</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="study-modes" id="study-modes">
+            <h2 class="section-title">Choose a Study Mode</h2>
+            <p class="section-subtitle">Different learning modes help you master the material in various ways</p>
+            
+            <div class="mode-buttons">
+                <div class="mode-btn" id="flashcard-button">
+                    <i class="fas fa-clone"></i>
+                    <h4>Flashcards</h4>
+                    <p>Review cards one by one and test your memory</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h4>Learn</h4>
+                    <p>Track your progress with spaced repetition</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-pencil-alt"></i>
+                    <h4>Test</h4>
+                    <p>Challenge yourself with various question types</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-th"></i>
+                    <h4>Match</h4>
+                    <p>Match terms and definitions against the clock</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-keyboard"></i>
+                    <h4>Write</h4>
+                    <p>Type your answers to check understanding</p>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-volume-up"></i>
+                    <h4>Spell</h4>
+                    <p>Practice spelling with audio prompts</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="flashcard-view" id="flashcard-view">
+            <div class="flashcard-header">
+                <h2>Biology 101: Chapter 3</h2>
+                <div class="flashcard-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <span class="progress-text" id="progress-text">Card 1 of 12</span>
+                </div>
+            </div>
+            
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                    <div class="flashcard-front">
+                        <div class="card-content">Photosynthesis</div>
+                        <div class="card-hint">Click to flip</div>
+                    </div>
+                    <div class="flashcard-back">
+                        <div class="card-content">The process by which green plants use sunlight to synthesize foods with carbon dioxide and water</div>
+                        <div class="card-hint">Click to flip back</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flashcard-controls">
+                <button class="btn btn-outline" id="prev-btn"><i class="fas fa-chevron-left"></i> Previous</button>
+                <button class="btn btn-secondary" id="flip-btn"><i class="fas fa-retweet"></i> Flip</button>
+                <button class="btn btn-primary" id="next-btn">Next <i class="fas fa-chevron-right"></i></button>
+            </div>
+        </section>
+        
+        <section class="library" id="library">
+            <h2 class="section-title">Study Set Library</h2>
+            <p class="section-subtitle">Browse and access all your study sets in one place</p>
+            
+            <div class="library-controls">
+                <div class="filter-options">
+                    <select class="filter-select">
+                        <option value="all">All Sets</option>
+                        <option value="created">Created by me</option>
+                        <option value="starred">Starred</option>
+                        <option value="recent">Recently viewed</option>
+                    </select>
+                    <select class="filter-select">
+                        <option value="recent">Recently updated</option>
+                        <option value="oldest">Oldest first</option>
+                        <option value="alphabetical">Alphabetical</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary"><i class="fas fa-plus"></i> Create New Set</button>
+            </div>
+            
+            <div class="study-sets-grid">
+                <!-- Sample Study Set Cards -->
+                <div class="study-set-card">
+                    <div class="study-set-header">
+                        <h3 class="study-set-title">Biology 101: Chapter 3</h3>
+                        <div class="study-set-info">
+                            <span>12 cards</span>
+                            <span>Updated 2 days ago</span>
+                        </div>
+                    </div>
+                    <div class="study-set-body">
+                        <div class="preview-cards">
+                            <div class="preview-card">
+                                <div class="preview-term">Photosynthesis</div>
+                                <div class="preview-definition">The process by which green plants use sunlight to synthesize foods with carbon dioxide and water</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Mitochondria</div>
+                                <div class="preview-definition">Organelles in cells that generate energy for the cell</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Osmosis</div>
+                                <div class="preview-definition">The movement of water through a semipermeable membrane</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="study-set-footer">
+                        <button class="btn btn-outline btn-sm study-btn">Study</button>
+                        <div class="set-actions">
+                            <div class="action-icon star-icon"><i class="fas fa-star"></i></div>
+                            <div class="action-icon edit-icon"><i class="fas fa-edit"></i></div>
+                            <div class="action-icon share-icon"><i class="fas fa-share-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="study-set-card">
+                    <div class="study-set-header">
+                        <h3 class="study-set-title">Spanish Vocabulary</h3>
+                        <div class="study-set-info">
+                            <span>24 cards</span>
+                            <span>Updated 1 week ago</span>
+                        </div>
+                    </div>
+                    <div class="study-set-body">
+                        <div class="preview-cards">
+                            <div class="preview-card">
+                                <div class="preview-term">Hola</div>
+                                <div class="preview-definition">Hello</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Adiós</div>
+                                <div class="preview-definition">Goodbye</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Buenos días</div>
+                                <div class="preview-definition">Good morning</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="study-set-footer">
+                        <button class="btn btn-outline btn-sm study-btn">Study</button>
+                        <div class="set-actions">
+                            <div class="action-icon star-icon"><i class="fas fa-star"></i></div>
+                            <div class="action-icon edit-icon"><i class="fas fa-edit"></i></div>
+                            <div class="action-icon share-icon"><i class="fas fa-share-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="study-set-card">
+                    <div class="study-set-header">
+                        <h3 class="study-set-title">World History: Ancient Rome</h3>
+                        <div class="study-set-info">
+                            <span>18 cards</span>
+                            <span>Updated 3 days ago</span>
+                        </div>
+                    </div>
+                    <div class="study-set-body">
+                        <div class="preview-cards">
+                            <div class="preview-card">
+                                <div class="preview-term">Julius Caesar</div>
+                                <div class="preview-definition">Roman general and statesman who played a critical role in the events that led to the demise of the Roman Republic</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Roman Senate</div>
+                                <div class="preview-definition">A political institution in ancient Rome</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="preview-term">Colosseum</div>
+                                <div class="preview-definition">An oval amphitheatre in the centre of Rome, Italy</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="study-set-footer">
+                        <button class="btn btn-outline btn-sm study-btn">Study</button>
+                        <div class="set-actions">
+                            <div class="action-icon star-icon"><i class="fas fa-star"></i></div>
+                            <div class="action-icon edit-icon"><i class="fas fa-edit"></i></div>
+                            <div class="action-icon share-icon"><i class="fas fa-share-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Login Modal -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Log In to GitHut</h3>
+                <button class="modal-close" id="close-login-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="login-form">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="login-email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
+                        <input type="email" id="login-email" class="set-title" placeholder="Enter your email" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="login-password" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
+                        <input type="password" id="login-password" class="set-title" placeholder="Enter your password" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="remember-me">
+                            <label for="remember-me">Remember me</label>
+                        </div>
+                        <a href="#" style="color: var(--primary); text-decoration: none;">Forgot password?</a>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancel-login">Cancel</button>
+                <button class="btn btn-primary" id="submit-login">Log In</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sign Up Modal -->
+    <div class="modal" id="signup-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Your Account</h3>
+                <button class="modal-close" id="close-signup-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="signup-form">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-name" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Full Name</label>
+                        <input type="text" id="signup-name" class="set-title" placeholder="Enter your name" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
+                        <input type="email" id="signup-email" class="set-title" placeholder="Enter your email" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-password" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
+                        <input type="password" id="signup-password" class="set-title" placeholder="Create a password (min. 8 characters)" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="signup-confirm" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Confirm Password</label>
+                        <input type="password" id="signup-confirm" class="set-title" placeholder="Confirm your password" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms">I agree to the <a href="#" style="color: var(--primary);">Terms of Service</a> and <a href="#" style="color: var(--primary);">Privacy Policy</a></label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancel-signup">Cancel</button>
+                <button class="btn btn-primary" id="submit-signup">Sign Up</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container">
+        <!-- Toast notifications will be inserted here -->
+    </div>
+    
+    <footer>
+        <div class="footer-container">
+            <div class="footer-column">
+                <h4>GitHut</h4>
+                <p>Free study tools for everyone, forever. Create, share, and learn with flashcards, practice tests, and more.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Features</h4>
+                <div class="footer-links">
+                    <a href="#">Flashcards</a>
+                    <a href="#">Study Modes</a>
+                    <a href="#">Bulk Import</a>
+                    <a href="#">Cloud Storage</a>
+                    <a href="#">Mobile App</a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Resources</h4>
+                <div class="footer-links">
+                    <a href="#">Help Center</a>
+                    <a href="#">Student Blog</a>
+                    <a href="#">Teacher Resources</a>
+                    <a href="#">API Documentation</a>
+                    <a href="#">Community Forum</a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Company</h4>
+                <div class="footer-links">
+                    <a href="#">About Us</a>
+                    <a href="#">Careers</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Contact Us</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 GitHut. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script>
+        // DOM elements
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const nav = document.getElementById('nav');
+        const addCardBtn = document.getElementById('add-card-btn');
+        const cardContainer = document.querySelector('.card-container');
+        const createSetBtn = document.getElementById('create-set-btn');
+        const studyModes = document.getElementById('study-modes');
+        const flashcardButton = document.getElementById('flashcard-button');
+        const flashcardView = document.getElementById('flashcard-view');
+        const flashcard = document.getElementById('flashcard');
+        const flipBtn = document.getElementById('flip-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
