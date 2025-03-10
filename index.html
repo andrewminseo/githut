@@ -1,4 +1,1644 @@
-<!DOCTYPE html>
+showToast('warning', 'No Questions Found', `There are no ${selectedType} questions in this set.`);
+                typeSelect.value = 'all';
+                return;
+            }
+            
+            // Reset to first matching question
+            currentTestSession.currentIndex = 0;
+            updateTestQuestion();
+            
+            showToast('info', 'Filter Applied', `Showing only ${selectedType} questions.`);
+        }
+        
+        // Function to show test summary
+        function showTestSummary() {
+            if (!currentTestSession) return;
+            
+            const questions = currentTestSession.questions;
+            const correctCount = questions.filter(q => q.isCorrect).length;
+            const totalQuestions = questions.length;
+            const percentage = Math.round((correctCount / totalQuestions) * 100);
+            
+            // Update summary counts
+            document.getElementById('score-percentage').textContent = percentage;
+            document.getElementById('correct-answers').textContent = correctCount;
+            document.getElementById('total-answers').textContent = totalQuestions;
+            
+            // Generate question breakdown
+            const questionsList = document.getElementById('questions-list');
+            questionsList.innerHTML = '';
+            
+            questions.forEach((question, index) => {
+                const questionItem = document.createElement('div');
+                questionItem.style.padding = '1rem';
+                questionItem.style.borderBottom = '1px solid var(--gray-200)';
+                questionItem.style.display = 'flex';
+                questionItem.style.alignItems = 'center';
+                questionItem.style.gap = '1rem';
+                
+                const icon = question.isCorrect 
+                    ? '<i class="fas fa-check-circle" style="color: var(--success); font-size: 1.2rem;"></i>'
+                    : '<i class="fas fa-times-circle" style="color: var(--danger); font-size: 1.2rem;"></i>';
+                
+                let questionText = question.term;
+                if (questionText.length > 60) {
+                    questionText = questionText.substring(0, 60) + '...';
+                }
+                
+                questionItem.innerHTML = `
+                    <div style="flex-shrink: 0;">${icon}</div>
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight: 500;">${questionText}</div>
+                        <div style="font-size: 0.9rem; color: var(--text-light);">
+                            Your answer: ${question.userAnswer}
+                        </div>
+                    </div>
+                    <div style="flex-shrink: 0;">
+                        <button class="btn btn-outline btn-sm review-question-btn" data-index="${index}">
+                            Review
+                        </button>
+                    </div>
+                `;
+                
+                questionsList.appendChild(questionItem);
+            });
+            
+            // Add event listeners to review buttons
+            questionsList.querySelectorAll('.review-question-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const index = parseInt(button.dataset.index);
+                    currentTestSession.currentIndex = index;
+                    
+                    // Hide summary and show question
+                    document.getElementById('test-summary').style.display = 'none';
+                    document.querySelector('.test-controls').style.display = 'flex';
+                    updateTestQuestion();
+                });
+            });
+            
+            // Hide questions and show summary
+            document.querySelector('.test-controls').style.display = 'none';
+            document.getElementById('test-summary').style.display = 'block';
+            
+            // Save test results to study set
+            saveTestResults();
+        }
+        
+        // Function to save test results
+        function saveTestResults() {
+            if (!currentTestSession) return;
+            
+            // Find original study set
+            const studySet = studySets.find(set => set.id === currentTestSession.setId);
+            if (!studySet) return;
+            
+            // Create test result record
+            const testResult = {
+                id: generateId(),
+                timestamp: new Date().toISOString(),
+                score: Math.round((currentTestSession.questions.filter(q => q.isCorrect).length / currentTestSession.questions.length) * 100),
+                questionCount: currentTestSession.questions.length,
+                correctCount: currentTestSession.questions.filter(q => q.isCorrect).length,
+                duration: Math.round((new Date() - currentTestSession.startTime) / 1000),
+                questions: currentTestSession.questions.map(q => ({
+                    cardId: q.cardId,
+                    type: q.type,
+                    isCorrect: q.isCorrect
+                }))
+            };
+            
+            // Add to set history
+            if (!studySet.testHistory) {
+                studySet.testHistory = [];
+            }
+            
+            studySet.testHistory.push(testResult);
+            
+            // Update card mastery based on test results
+            currentTestSession.questions.forEach(question => {
+                const card = studySet.cards.find(c => c.id === question.cardId);
+                if (card) {
+                    const oldMastery = card.mastery || 0;
+                    
+                    if (question.isCorrect) {
+                        card.mastery = Math.min(1, oldMastery + 0.2);
+                    } else {
+                        card.mastery = Math.max(0, oldMastery - 0.1);
+                    }
+                    
+                    card.lastReviewed = new Date().toISOString();
+                }
+            });
+            
+            // Save updated set
+            saveStudySet(studySet).catch(error => {
+                console.error('Failed             // If at the end, show summary
+            if (currentLearnSession.currentIndex >= currentLearnSession.cards.length - 1) {
+                showLearnSummary();
+                return;
+            }
+            
+            currentLearnSession.currentIndex++;
+            updateLearnCard();
+            updateLearnProgress();
+        }
+        
+        // Function to rate confidence on a card
+        function rateConfidence(confidenceLevel) {
+            if (!currentLearnSession) return;
+            
+            const card = currentLearnSession.cards[currentLearnSession.currentIndex];
+            
+            // Update card mastery based on confidence
+            const oldMastery = card.mastery || 0;
+            
+            // confidence levels: 0 = incorrect, 1 = somewhat, 2 = correct
+            switch(confidenceLevel) {
+                case 0: // Incorrect
+                    card.mastery = Math.max(0, oldMastery - 0.3);
+                    card.currentSession.correct = false;
+                    break;
+                case 1: // Somewhat
+                    card.mastery = oldMastery + 0.1;
+                    card.currentSession.correct = true;
+                    break;
+                case 2: // Correct
+                    card.mastery = Math.min(1, oldMastery + 0.3);
+                    card.currentSession.correct = true;
+                    break;
+            }
+            
+            // Update last reviewed time
+            card.lastReviewed = new Date().toISOString();
+            
+            // Update confidence level for this session
+            card.currentSession.confidence = confidenceLevel;
+            
+            // Mark card as completed for this session
+            if (!card.currentSession.completed) {
+                card.currentSession.completed = true;
+                currentLearnSession.completedCards++;
+            }
+            
+            // Move to next card
+            nextLearnCard();
+            
+            // Save progress
+            saveLearnProgress();
+        }
+        
+        // Function to save learning progress
+        function saveLearnProgress() {
+            if (!currentLearnSession) return;
+            
+            // Find the original study set
+            const studySet = studySets.find(set => set.id === currentLearnSession.setId);
+            if (!studySet) return;
+            
+            // Update card mastery in the original set
+            currentLearnSession.cards.forEach(learnCard => {
+                const originalCard = studySet.cards.find(card => card.id === learnCard.id);
+                if (originalCard) {
+                    originalCard.mastery = learnCard.mastery;
+                    originalCard.lastReviewed = learnCard.lastReviewed;
+                }
+            });
+            
+            // Save updated set
+            saveStudySet(studySet).catch(error => {
+                console.error('Failed to save learning progress:', error);
+            });
+        }
+        
+        // Function to show learn summary
+        function showLearnSummary() {
+            if (!currentLearnSession) return;
+            
+            const cards = currentLearnSession.cards;
+            
+            // Count cards by mastery level
+            const masteredCount = cards.filter(card => card.mastery >= 0.8).length;
+            const reviewingCount = cards.filter(card => card.mastery >= 0.3 && card.mastery < 0.8).length;
+            const struggledCount = cards.filter(card => card.mastery < 0.3).length;
+            
+            // Update summary counts
+            document.getElementById('mastered-count').textContent = masteredCount;
+            document.getElementById('reviewing-count').textContent = reviewingCount;
+            document.getElementById('struggled-count').textContent = struggledCount;
+            
+            // Hide cards and show summary
+            document.querySelector('.flashcard-container').style.display = 'none';
+            document.querySelector('.flashcard-controls').style.display = 'none';
+            document.getElementById('confidence-buttons').style.display = 'none';
+            document.getElementById('learn-summary').style.display = 'block';
+            
+            // Save overall learning progress
+            saveLearnProgress();
+        }
+        
+        // TEST MODE IMPLEMENTATION
+        function initTestMode(studySet) {
+            // Create test mode view if not exists
+            let testView = document.getElementById('test-view');
+            
+            if (!testView) {
+                testView = document.createElement('section');
+                testView.id = 'test-view';
+                testView.className = 'flashcard-view';
+                testView.style.display = 'none';
+                
+                testView.innerHTML = `
+                    <div class="flashcard-header">
+                        <h2></h2>
+                        <div class="flashcard-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="test-progress-fill"></div>
+                            </div>
+                            <span class="progress-text" id="test-progress-text"></span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem; background-color: var(--white); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div style="font-weight: 600; font-size: 1.1rem;">Question <span id="question-number">1</span> of <span id="total-questions">10</span></div>
+                            <div style="display: flex; gap: 1rem;">
+                                <select id="question-type-select" class="filter-select">
+                                    <option value="all">All Question Types</option>
+                                    <option value="multiple">Multiple Choice</option>
+                                    <option value="written">Written</option>
+                                    <option value="true-false">True/False</option>
+                                    <option value="matching">Matching</option>
+                                </select>
+                                <button class="btn btn-outline btn-sm" id="shuffle-test-btn">
+                                    <i class="fas fa-random"></i> Shuffle
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="question-container" style="margin-bottom: 1.5rem;">
+                            <div style="font-weight: 500; margin-bottom: 0.5rem;">Term:</div>
+                            <div id="question-term" style="font-size: 1.3rem; margin-bottom: 1rem;"></div>
+                        </div>
+                        
+                        <div id="answer-container">
+                            <!-- Answer options will be generated dynamically -->
+                        </div>
+                        
+                        <div id="feedback-container" style="margin-top: 1rem; display: none;">
+                            <div id="feedback-message" style="padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1rem;"></div>
+                            <div id="correct-answer" style="display: none;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="test-controls" style="display: flex; justify-content: space-between; align-items: center;">
+                        <button class="btn btn-outline" id="test-prev-btn" disabled>
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <button class="btn btn-primary" id="test-submit-btn">
+                            Submit Answer
+                        </button>
+                        <button class="btn btn-primary" id="test-next-btn" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="test-summary" style="display: none; margin-top: 2rem; background-color: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow-md);">
+                        <h3 style="margin-bottom: 1.5rem; text-align: center;">Test Results</h3>
+                        
+                        <div style="display: flex; justify-content: space-around; margin-bottom: 2rem;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 3rem; font-weight: 700; color: var(--primary);">
+                                    <span id="score-percentage">0</span>%
+                                </div>
+                                <div>Overall Score</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 3rem; font-weight: 700; color: var(--success);">
+                                    <span id="correct-answers">0</span>/<span id="total-answers">0</span>
+                                </div>
+                                <div>Correct Answers</div>
+                            </div>
+                        </div>
+                        
+                        <div id="results-breakdown" style="margin-bottom: 2rem;">
+                            <h4 style="margin-bottom: 1rem;">Question Breakdown</h4>
+                            <div id="questions-list">
+                                <!-- Question results will be inserted here -->
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: center; gap: 1rem;">
+                            <button class="btn btn-primary" id="restart-test-btn">
+                                <i class="fas fa-redo"></i> Take Another Test
+                            </button>
+                            <button class="btn btn-outline" id="exit-test-btn">
+                                <i class="fas fa-arrow-left"></i> Back to Study Modes
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add to DOM
+                const learnView = document.getElementById('learn-view');
+                if (learnView) {
+                    learnView.parentNode.insertBefore(testView, learnView.nextSibling);
+                } else {
+                    flashcardView.parentNode.insertBefore(testView, flashcardView.nextSibling);
+                }
+                
+                // Add event listeners
+                document.getElementById('test-prev-btn').addEventListener('click', previousTestQuestion);
+                document.getElementById('test-next-btn').addEventListener('click', nextTestQuestion);
+                document.getElementById('test-submit-btn').addEventListener('click', submitTestAnswer);
+                document.getElementById('shuffle-test-btn').addEventListener('click', shuffleTestQuestions);
+                document.getElementById('question-type-select').addEventListener('change', changeQuestionType);
+                document.getElementById('restart-test-btn').addEventListener('click', () => initTestMode(studySet));
+                document.getElementById('exit-test-btn').addEventListener('click', () => {
+                    testView.style.display = 'none';
+                    studyModes.style.display = 'block';
+                    studyModes.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+            
+            // Update document title
+            document.title = `Test: ${studySet.title} | GitHut`;
+            
+            // Prepare test session
+            const testQuestions = generateTestQuestions(studySet);
+            
+            // Set as current test session
+            currentTestSession = {
+                setId: studySet.id,
+                title: studySet.title,
+                questions: testQuestions,
+                currentIndex: 0,
+                startTime: new Date(),
+                answers: [],
+                questionType: 'all'
+            };
+            
+            // Hide other views
+            flashcardView.style.display = 'none';
+            if (document.getElementById('learn-view')) {
+                document.getElementById('learn-view').style.display = 'none';
+            }
+            
+            // Update header
+            testView.querySelector('.flashcard-header h2').textContent = studySet.title;
+            
+            // Reset summary
+            document.getElementById('test-summary').style.display = 'none';
+            
+            // Update total questions
+            document.getElementById('total-questions').textContent = testQuestions.length;
+            
+            // Show test view
+            testView.style.display = 'block';
+            document.querySelector('.test-controls').style.display = 'flex';
+            
+            // Update first question
+            updateTestQuestion();
+            
+            // Scroll to test view
+            testView.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Test mode variables
+        let currentTestSession = null;
+        
+        // Function to generate test questions
+        function generateTestQuestions(studySet) {
+            const cards = [...studySet.cards];
+            const questions = [];
+            
+            // Shuffle cards for randomness
+            shuffleArray(cards);
+            
+            // Create different question types
+            cards.forEach((card, index) => {
+                // Determine question type (cycle through types)
+                const questionTypes = ['multiple', 'written', 'true-false', 'matching'];
+                const type = questionTypes[index % questionTypes.length];
+                
+                let question;
+                
+                switch (type) {
+                    case 'multiple':
+                        question = createMultipleChoiceQuestion(card, cards);
+                        break;
+                    case 'written':
+                        question = createWrittenQuestion(card);
+                        break;
+                    case 'true-false':
+                        question = createTrueFalseQuestion(card, cards);
+                        break;
+                    case 'matching':
+                        question = createMatchingQuestion(card, cards);
+                        break;
+                    default:
+                        question = createMultipleChoiceQuestion(card, cards);
+                }
+                
+                questions.push(question);
+            });
+            
+            return questions;
+        }
+        
+        // Function to create multiple choice question
+        function createMultipleChoiceQuestion(card, allCards) {
+            // Get 3 random incorrect answers
+            const incorrectAnswers = getRandomIncorrectAnswers(card, allCards, 3);
+            
+            // Create all options (correct + incorrect)
+            const options = [
+                { text: card.definition, correct: true },
+                ...incorrectAnswers.map(text => ({ text, correct: false }))
+            ];
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            return {
+                id: generateId(),
+                type: 'multiple',
+                term: card.term,
+                definition: card.definition,
+                options: options,
+                correctAnswer: card.definition,
+                userAnswer: null,
+                isCorrect: null,
+                cardId: card.id
+            };
+        }
+        
+        // Function to create written question
+        function createWrittenQuestion(card) {
+            return {
+                id: generateId(),
+                type: 'written',
+                term: card.term,
+                definition: card.definition,
+                correctAnswer: card.definition,
+                userAnswer: null,
+                isCorrect: null,
+                cardId: card.id
+            };
+        }
+        
+        // Function to create true/false question
+        function createTrueFalseQuestion(card, allCards) {
+            // Randomly decide if this will be true or false
+            const isTrueQuestion = Math.random() > 0.5;
+            
+            let statement, correctAnswer;
+            
+            if (isTrueQuestion) {
+                // True statement (correct definition)
+                statement = `"${card.term}" means: ${card.definition}`;
+                correctAnswer = 'true';
+            } else {
+                // False statement (incorrect definition)
+                const incorrectAnswer = getRandomIncorrectAnswers(card, allCards, 1)[0];
+                statement = `"${card.term}" means: ${incorrectAnswer}`;
+                correctAnswer = 'false';
+            }
+            
+            return {
+                id: generateId(),
+                type: 'true-false',
+                term: statement,
+                definition: card.definition,
+                options: [
+                    { text: 'True', value: 'true' },
+                    { text: 'False', value: 'false' }
+                ],
+                correctAnswer: correctAnswer,
+                userAnswer: null,
+                isCorrect: null,
+                cardId: card.id
+            };
+        }
+        
+        // Function to create matching question
+        function createMatchingQuestion(card, allCards) {
+            // Get 3 random incorrect terms
+            const incorrectTerms = getRandomIncorrectTerms(card, allCards, 3);
+            
+            // Create all options
+            const termOptions = [
+                { id: card.id, text: card.term, correct: true },
+                ...incorrectTerms.map((term, index) => ({ id: `incorrect-${index}`, text: term, correct: false }))
+            ];
+            
+            // Shuffle options
+            shuffleArray(termOptions);
+            
+            return {
+                id: generateId(),
+                type: 'matching',
+                term: 'Match the correct term with this definition:',
+                definition: card.definition,
+                options: termOptions,
+                correctAnswer: card.term,
+                userAnswer: null,
+                isCorrect: null,
+                cardId: card.id
+            };
+        }
+        
+        // Function to get random incorrect answers
+        function getRandomIncorrectAnswers(card, allCards, count) {
+            // Filter out the current card
+            const otherCards = allCards.filter(c => c.id !== card.id);
+            
+            // Shuffle and get the requested number of incorrect definitions
+            shuffleArray(otherCards);
+            return otherCards.slice(0, count).map(c => c.definition);
+        }
+        
+        // Function to get random incorrect terms
+        function getRandomIncorrectTerms(card, allCards, count) {
+            // Filter out the current card
+            const otherCards = allCards.filter(c => c.id !== card.id);
+            
+            // Shuffle and get the requested number of incorrect terms
+            shuffleArray(otherCards);
+            return otherCards.slice(0, count).map(c => c.term);
+        }
+        
+        // Function to shuffle an array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Function to update test question
+        function updateTestQuestion() {
+            if (!currentTestSession || !currentTestSession.questions.length) return;
+            
+            const question = currentTestSession.questions[currentTestSession.currentIndex];
+            const questionNumber = currentTestSession.currentIndex + 1;
+            const totalQuestions = currentTestSession.questions.length;
+            
+            // Update question number
+            document.getElementById('question-number').textContent = questionNumber;
+            
+            // Update term
+            document.getElementById('question-term').textContent = question.term;
+            
+            // Update answer container based on question type
+            const answerContainer = document.getElementById('answer-container');
+            answerContainer.innerHTML = '';
+            
+            // Reset feedback
+            const feedbackContainer = document.getElementById('feedback-container');
+            feedbackContainer.style.display = 'none';
+            
+            // Reset submit button
+            const submitBtn = document.getElementById('test-submit-btn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Answer';
+            
+            switch (question.type) {
+                case 'multiple':
+                    renderMultipleChoice(question, answerContainer);
+                    break;
+                case 'written':
+                    renderWritten(question, answerContainer);
+                    break;
+                case 'true-false':
+                    renderTrueFalse(question, answerContainer);
+                    break;
+                case 'matching':
+                    renderMatching(question, answerContainer);
+                    break;
+            }
+            
+            // If question has been answered, show feedback
+            if (question.userAnswer !== null) {
+                showTestFeedback(question);
+                submitBtn.disabled = true;
+            }
+            
+            // Update progress
+            updateTestProgress();
+            
+            // Update navigation buttons
+            document.getElementById('test-prev-btn').disabled = currentTestSession.currentIndex === 0;
+            document.getElementById('test-next-btn').disabled = 
+                currentTestSession.currentIndex === currentTestSession.questions.length - 1 ||
+                question.userAnswer === null;
+        }
+        
+        // Function to render multiple choice question
+        function renderMultipleChoice(question, container) {
+            container.innerHTML = `
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">Choose the correct definition:</div>
+                <div class="options-list">
+                    ${question.options.map((option, index) => `
+                        <div class="option" data-index="${index}">
+                            <input type="radio" id="option-${index}" name="multiple-choice" value="${index}" 
+                                ${question.userAnswer !== null && question.userAnswer === option.text ? 'checked' : ''}>
+                            <label for="option-${index}">${option.text}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Disable inputs if already answered
+            if (question.userAnswer !== null) {
+                container.querySelectorAll('input').forEach(input => {
+                    input.disabled = true;
+                });
+            }
+        }
+        
+        // Function to render written question
+        function renderWritten(question, container) {
+            container.innerHTML = `
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">Write the definition:</div>
+                <textarea id="written-answer" style="width: 100%; padding: 1rem; border: 1px solid var(--gray-300); 
+                    border-radius: var(--border-radius); min-height: 120px;"
+                    ${question.userAnswer !== null ? 'disabled' : ''}>${question.userAnswer || ''}</textarea>
+            `;
+        }
+        
+        // Function to render true/false question
+        function renderTrueFalse(question, container) {
+            container.innerHTML = `
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">Is this statement true or false?</div>
+                <div class="options-list">
+                    ${question.options.map((option, index) => `
+                        <div class="option" data-index="${index}">
+                            <input type="radio" id="option-${index}" name="true-false" value="${option.value}" 
+                                ${question.userAnswer !== null && question.userAnswer === option.value ? 'checked' : ''}>
+                            <label for="option-${index}">${option.text}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Disable inputs if already answered
+            if (question.userAnswer !== null) {
+                container.querySelectorAll('input').forEach(input => {
+                    input.disabled = true;
+                });
+            }
+        }
+        
+        // Function to render matching question
+        function renderMatching(question, container) {
+            container.innerHTML = `
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">Definition:</div>
+                <div style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius); 
+                    margin-bottom: 1rem;">${question.definition}</div>
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">Select the matching term:</div>
+                <div class="options-list">
+                    ${question.options.map((option, index) => `
+                        <div class="option" data-index="${index}">
+                            <input type="radio" id="option-${index}" name="matching" value="${option.id}" 
+                                ${question.userAnswer !== null && question.userAnswer === option.text ? 'checked' : ''}>
+                            <label for="option-${index}">${option.text}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Disable inputs if already answered
+            if (question.userAnswer !== null) {
+                container.querySelectorAll('input').forEach(input => {
+                    input.disabled = true;
+                });
+            }
+        }
+        
+        // Function to submit test answer
+        function submitTestAnswer() {
+            if (!currentTestSession) return;
+            
+            const question = currentTestSession.questions[currentTestSession.currentIndex];
+            let userAnswer = null;
+            let isCorrect = false;
+            
+            switch (question.type) {
+                case 'multiple':
+                    const selectedOption = document.querySelector('input[name="multiple-choice"]:checked');
+                    if (selectedOption) {
+                        const optionIndex = parseInt(selectedOption.value);
+                        userAnswer = question.options[optionIndex].text;
+                        isCorrect = question.options[optionIndex].correct;
+                    }
+                    break;
+                case 'written':
+                    userAnswer = document.getElementById('written-answer').value.trim();
+                    // For written, we'll use a similarity check
+                    isCorrect = checkAnswerSimilarity(userAnswer, question.correctAnswer);
+                    break;
+                case 'true-false':
+                    const selectedTF = document.querySelector('input[name="true-false"]:checked');
+                    if (selectedTF) {
+                        userAnswer = selectedTF.value;
+                        isCorrect = userAnswer === question.correctAnswer;
+                    }
+                    break;
+                case 'matching':
+                    const selectedMatch = document.querySelector('input[name="matching"]:checked');
+                    if (selectedMatch) {
+                        const optionId = selectedMatch.value;
+                        const option = question.options.find(opt => opt.id === optionId);
+                        userAnswer = option.text;
+                        isCorrect = option.correct;
+                    }
+                    break;
+            }
+            
+            if (userAnswer === null) {
+                showToast('warning', 'No Answer', 'Please select or write an answer before submitting.');
+                return;
+            }
+            
+            // Update question with answer
+            question.userAnswer = userAnswer;
+            question.isCorrect = isCorrect;
+            
+            // Show feedback
+            showTestFeedback(question);
+            
+            // Update navigation
+            document.getElementById('test-submit-btn').disabled = true;
+            document.getElementById('test-next-btn').disabled = currentTestSession.currentIndex === currentTestSession.questions.length - 1;
+            
+            // If all questions answered, enable finish button
+            if (currentTestSession.questions.every(q => q.userAnswer !== null)) {
+                document.getElementById('test-next-btn').textContent = 'Finish Test';
+            }
+        }
+        
+        // Function to check answer similarity for written questions
+        function checkAnswerSimilarity(userAnswer, correctAnswer) {
+            if (!userAnswer) return false;
+            
+            // Convert both to lowercase for comparison
+            userAnswer = userAnswer.toLowerCase();
+            correctAnswer = correctAnswer.toLowerCase();
+            
+            // Exact match
+            if (userAnswer === correctAnswer) return true;
+            
+            // Check if user answer contains most words from correct answer
+            const correctWords = correctAnswer.split(/\W+/).filter(word => word.length > 3);
+            const userWords = userAnswer.split(/\W+/);
+            
+            let matchCount = 0;
+            for (const word of correctWords) {
+                if (userWords.some(userWord => userWord.includes(word) || word.includes(userWord))) {
+                    matchCount++;
+                }
+            }
+            
+            // If user answer contains at least 70% of the significant words, count it as correct
+            return matchCount >= correctWords.length * 0.7;
+        }
+        
+        // Function to show test feedback
+        function showTestFeedback(question) {
+            const feedbackContainer = document.getElementById('feedback-container');
+            const feedbackMessage = document.getElementById('feedback-message');
+            const correctAnswer = document.getElementById('correct-answer');
+            
+            feedbackContainer.style.display = 'block';
+            
+            if (question.isCorrect) {
+                feedbackMessage.style.backgroundColor = 'rgba(66, 185, 131, 0.1)';
+                feedbackMessage.style.borderLeft = '4px solid var(--success)';
+                feedbackMessage.innerHTML = '<i class="fas fa-check-circle" style="color: var(--success);"></i> Correct!';
+                correctAnswer.style.display = 'none';
+            } else {
+                feedbackMessage.style.backgroundColor = 'rgba(255, 82, 82, 0.1)';
+                feedbackMessage.style.borderLeft = '4px solid var(--danger)';
+                feedbackMessage.innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger);"></i> Incorrect';
+                
+                correctAnswer.style.display = 'block';
+                correctAnswer.innerHTML = `
+                    <div style="font-weight: 500; margin-bottom: 0.5rem;">Correct Answer:</div>
+                    <div style="padding: 0.5rem 1rem; background-color: rgba(66, 185, 131, 0.1); 
+                        border-radius: var(--border-radius);">${question.correctAnswer}</div>
+                `;
+            }
+            
+            // Disable answer inputs
+            document.getElementById('answer-container').querySelectorAll('input, textarea').forEach(input => {
+                input.disabled = true;
+            });
+        }
+        
+        // Function to update test progress
+        function updateTestProgress() {
+            if (!currentTestSession) return;
+            
+            const total = currentTestSession.questions.length;
+            const answered = currentTestSession.questions.filter(q => q.userAnswer !== null).length;
+            const percentage = (answered / total) * 100;
+            
+            const progressFill = document.getElementById('test-progress-fill');
+            const progressText = document.getElementById('test-progress-text');
+            
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `${answered} of ${total} answered`;
+        }
+        
+        // Function to go to previous test question
+        function previousTestQuestion() {
+            if (!currentTestSession || currentTestSession.currentIndex <= 0) return;
+            
+            currentTestSession.currentIndex--;
+            updateTestQuestion();
+        }
+        
+        // Function to go to next test question
+        function nextTestQuestion() {
+            if (!currentTestSession) return;
+            
+            // If all questions answered and at the end, show summary
+            if (currentTestSession.currentIndex === currentTestSession.questions.length - 1 &&
+                currentTestSession.questions.every(q => q.userAnswer !== null)) {
+                showTestSummary();
+                return;
+            }
+            
+            // Go to next question
+            if (currentTestSession.currentIndex < currentTestSession.questions.length - 1) {
+                currentTestSession.currentIndex++;
+                updateTestQuestion();
+            }
+        }
+        
+        // Function to shuffle test questions
+        function shuffleTestQuestions() {
+            if (!currentTestSession) return;
+            
+            shuffleArray(currentTestSession.questions);
+            currentTestSession.currentIndex = 0;
+            updateTestQuestion();
+            
+            showToast('info', 'Questions Shuffled', 'The order of questions has been randomized.');
+        }
+        
+        // Function to change question type
+        function changeQuestionType() {
+            if (!currentTestSession) return;
+            
+            const typeSelect = document.getElementById('question-type-select');
+            const selectedType = typeSelect.value;
+            
+            currentTestSession.questionType = selectedType;
+            
+            // If all types, show all questions
+            if (selectedType === 'all') {
+                // Restore all questions
+                updateTestQuestion();
+                return;
+            }
+            
+            // Filter questions by type
+            const matchingQuestions = currentTestSession.questions.filter(q => q.type === selectedType);
+            
+            if (matchingQuestions.length === 0) {
+                show                'computer', 'programming', 'coding', 'software',
+                'art', 'music', 'dance', 'theater', 'film',
+                'sat', 'act', 'test', 'exam', 'quiz',
+                'vocabulary', 'definition', 'term',
+                'medical', 'nursing', 'anatomy', 'physiology',
+                'law', 'legal', 'business', 'finance', 'accounting'
+            ];
+            
+            const words = text.toLowerCase().split(/\W+/);
+            const tags = [];
+            
+            for (const word of words) {
+                if (word.length > 3 && commonSubjects.includes(word)) {
+                    tags.push(word);
+                }
+            }
+            
+            // Add additional tags based on number of cards
+            if (currentSet.cards.length <= 10) {
+                tags.push('small-set');
+            } else if (currentSet.cards.length >= 50) {
+                tags.push('large-set');
+            }
+            
+            // Limit to 5 unique tags
+            return [...new Set(tags)].slice(0, 5);
+        }
+        
+        // Function to detect language of the cards
+        function detectLanguage(cards) {
+            // Simple language detection based on common words
+            const spanishWords = ['el', 'la', 'los', 'las', 'es', 'son', 'está', 'están', 'y', 'o', 'pero', 'si', 'cuando', 'como', 'qué', 'cuál', 'por qué'];
+            const frenchWords = ['le', 'la', 'les', 'un', 'une', 'des', 'est', 'sont', 'et', 'ou', 'mais', 'si', 'quand', 'comment', 'quel', 'quelle', 'pourquoi'];
+            const germanWords = ['der', 'die', 'das', 'ein', 'eine', 'ist', 'sind', 'und', 'oder', 'aber', 'wenn', 'wie', 'was', 'warum', 'welche'];
+            
+            let englishCount = 0;
+            let spanishCount = 0;
+            let frenchCount = 0;
+            let germanCount = 0;
+            
+            for (const card of cards) {
+                const text = (card.term + ' ' + card.definition).toLowerCase();
+                const words = text.split(/\W+/);
+                
+                for (const word of words) {
+                    if (spanishWords.includes(word)) spanishCount++;
+                    if (frenchWords.includes(word)) frenchCount++;
+                    if (germanWords.includes(word)) germanCount++;
+                    if (word.length >= 2) englishCount++; // English is default
+                }
+            }
+            
+            const counts = [
+                { lang: 'english', count: englishCount },
+                { lang: 'spanish', count: spanishCount },
+                { lang: 'french', count: frenchCount },
+                { lang: 'german', count: germanCount }
+            ];
+            
+            // Find the language with the highest count
+            const detected = counts.reduce((prev, current) => 
+                (current.count > prev.count) ? current : prev
+            );
+            
+            return detected.lang;
+        }
+        
+        // Improved function to save study set with cloud sync
+        function saveStudySet(set) {
+            return new Promise((resolve, reject) => {
+                // In a real implementation, this would use Firebase
+                try {
+                    // Simulate saving to cloud database
+                    setTimeout(() => {
+                        console.log('Saving study set to cloud:', set);
+                        
+                        // Generate server-side ID if new set
+                        if (!set.serverId) {
+                            set.serverId = 'server_' + generateId();
+                        }
+                        
+                        // Add to local collection for demo 
+                        const existingIndex = studySets.findIndex(s => s.id === set.id);
+                        if (existingIndex >= 0) {
+                            studySets[existingIndex] = set;
+                        } else {
+                            studySets.push(set);
+                        }
+                        
+                        // Simulate server response with additional data
+                        const serverResponse = {
+                            ...set,
+                            syncedAt: new Date().toISOString(),
+                            status: 'synced'
+                        };
+                        
+                        // Store in local storage as backup
+                        localStorage.setItem(`githut_set_${set.id}`, JSON.stringify(serverResponse));
+                        
+                        // Success
+                        resolve(serverResponse);
+                    }, 1200);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+        
+        // Function to get current user ID (would use Firebase Auth in real implementation)
+        function getCurrentUserId() {
+            // Check if user is logged in
+            const userData = JSON.parse(localStorage.getItem('githut_user') || 'null');
+            return userData ? userData.uid : null;
+        }
+        
+        // Function to get current username
+        function getCurrentUsername() {
+            const userData = JSON.parse(localStorage.getItem('githut_user') || 'null');
+            return userData ? userData.displayName : null;
+        }
+        
+        // Function to add study set to search index
+        function indexStudySet(set) {
+            // In a real implementation, this would add to a search index
+            console.log('Indexing study set for discovery:', set);
+            
+            // For the demo, we'll just add it to a "discovery" array in localStorage
+            const discoveryIndex = JSON.parse(localStorage.getItem('githut_discovery') || '[]');
+            
+            // Only add public sets
+            if (set.visibility === 'public') {
+                // Add set metadata to discovery index (not the full cards)
+                discoveryIndex.push({
+                    id: set.id,
+                    serverId: set.serverId,
+                    title: set.title,
+                    description: set.description,
+                    cardCount: set.cards.length,
+                    language: set.language,
+                    tags: set.tags,
+                    userId: set.userId,
+                    username: set.username,
+                    createdAt: set.createdAt,
+                    updatedAt: set.updatedAt
+                });
+                
+                // Save updated index
+                localStorage.setItem('githut_discovery', JSON.stringify(discoveryIndex));
+            }
+        }
+        
+        // Function to refresh library with latest study sets
+        function refreshLibrary() {
+            const libraryContainer = document.querySelector('.study-sets-grid');
+            if (!libraryContainer) return;
+            
+            // Clear existing content
+            libraryContainer.innerHTML = '';
+            
+            // Get user ID
+            const userId = getCurrentUserId();
+            
+            // Filter sets based on current filter
+            const currentFilter = document.querySelector('.filter-select').value;
+            let filteredSets = [];
+            
+            switch (currentFilter) {
+                case 'created':
+                    filteredSets = studySets.filter(set => set.userId === userId);
+                    break;
+                case 'starred':
+                    // Get starred sets from localStorage
+                    const starredIds = JSON.parse(localStorage.getItem('githut_starred') || '[]');
+                    filteredSets = studySets.filter(set => starredIds.includes(set.id));
+                    break;
+                case 'recent':
+                    // Get recently viewed sets from localStorage
+                    const recentIds = JSON.parse(localStorage.getItem('githut_recent') || '[]');
+                    filteredSets = studySets.filter(set => recentIds.includes(set.id));
+                    break;
+                default: // 'all'
+                    filteredSets = studySets;
+            }
+            
+            // Sort sets
+            const sortOption = document.querySelector('.filter-select:nth-child(2)').value;
+            
+            switch (sortOption) {
+                case 'alphabetical':
+                    filteredSets.sort((a, b) => a.title.localeCompare(b.title));
+                    break;
+                case 'oldest':
+                    filteredSets.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                    break;
+                default: // 'recent'
+                    filteredSets.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            }
+            
+            // Render sets
+            if (filteredSets.length === 0) {
+                libraryContainer.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 3rem 1rem;">
+                        <i class="fas fa-search" style="font-size: 3rem; color: var(--gray-300); margin-bottom: 1rem;"></i>
+                        <h3>No study sets found</h3>
+                        <p>Create your first set or change your filter options.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Render each set
+            filteredSets.forEach(set => {
+                // Get up to 3 cards as preview
+                const previewCards = set.cards.slice(0, 3);
+                
+                const setCard = document.createElement('div');
+                setCard.className = 'study-set-card';
+                setCard.innerHTML = `
+                    <div class="study-set-header">
+                        <h3 class="study-set-title">${escapeHtml(set.title)}</h3>
+                        <div class="study-set-info">
+                            <span>${set.cards.length} cards</span>
+                            <span>${formatDate(set.updatedAt)}</span>
+                        </div>
+                    </div>
+                    <div class="study-set-body">
+                        <div class="preview-cards">
+                            ${previewCards.map(card => `
+                                <div class="preview-card">
+                                    <div class="preview-term">${escapeHtml(card.term)}</div>
+                                    <div class="preview-definition">${escapeHtml(card.definition)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="study-set-footer">
+                        <button class="btn btn-outline btn-sm study-btn" data-id="${set.id}">Study</button>
+                        <div class="set-actions">
+                            <div class="action-icon star-icon" data-id="${set.id}"><i class="fas fa-star"></i></div>
+                            <div class="action-icon edit-icon" data-id="${set.id}"><i class="fas fa-edit"></i></div>
+                            <div class="action-icon share-icon" data-id="${set.id}"><i class="fas fa-share-alt"></i></div>
+                        </div>
+                    </div>
+                `;
+                libraryContainer.appendChild(setCard);
+                
+                // Add event listeners
+                setCard.querySelector('.study-btn').addEventListener('click', () => openStudySet(set.id));
+                setCard.querySelector('.star-icon').addEventListener('click', () => toggleStarStudySet(set.id));
+                setCard.querySelector('.edit-icon').addEventListener('click', () => editStudySet(set.id));
+                setCard.querySelector('.share-icon').addEventListener('click', () => shareStudySet(set.id));
+            });
+        }
+        
+        // Function to format date in a readable way
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            
+            // Less than a day ago
+            if (diff < 24 * 60 * 60 * 1000) {
+                const hours = Math.floor(diff / (60 * 60 * 1000));
+                if (hours < 1) return 'Just now';
+                return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+            }
+            
+            // Less than a week ago
+            if (diff < 7 * 24 * 60 * 60 * 1000) {
+                const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+                return `${days} day${days === 1 ? '' : 's'} ago`;
+            }
+            
+            // Format as regular date
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        
+        // Initialize study modes
+        const modeButtons = document.querySelectorAll('.mode-btn');
+        
+        modeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const mode = button.querySelector('h4').textContent.toLowerCase();
+                startStudyMode(mode, currentSet);
+            });
+        });
+        
+        // Function to start a study mode
+        function startStudyMode(mode, studySet) {
+            if (!studySet || !studySet.cards || studySet.cards.length === 0) {
+                showToast('error', 'Empty Study Set', 'This study set has no cards to study.');
+                return;
+            }
+            
+            // Track that the user viewed this set
+            addToRecentlyViewed(studySet.id);
+            
+            // Update view count
+            studySet.views = (studySet.views || 0) + 1;
+            saveStudySet(studySet).catch(error => {
+                console.error('Failed to update view count:', error);
+            });
+            
+            switch (mode.toLowerCase()) {
+                case 'flashcards':
+                    initFlashcardMode(studySet);
+                    break;
+                case 'learn':
+                    initLearnMode(studySet);
+                    break;
+                case 'test':
+                    initTestMode(studySet);
+                    break;
+                case 'match':
+                    initMatchMode(studySet);
+                    break;
+                case 'write':
+                    initWriteMode(studySet);
+                    break;
+                case 'spell':
+                    initSpellMode(studySet);
+                    break;
+                default:
+                    initFlashcardMode(studySet);
+            }
+        }
+        
+        // Function to add set to recently viewed
+        function addToRecentlyViewed(setId) {
+            const recentIds = JSON.parse(localStorage.getItem('githut_recent') || '[]');
+            
+            // Remove if already exists (to move to front)
+            const index = recentIds.indexOf(setId);
+            if (index !== -1) {
+                recentIds.splice(index, 1);
+            }
+            
+            // Add to front
+            recentIds.unshift(setId);
+            
+            // Limit to 10 recent sets
+            const limitedIds = recentIds.slice(0, 10);
+            
+            // Save to localStorage
+            localStorage.setItem('githut_recent', JSON.stringify(limitedIds));
+        }
+        
+        // Function to toggle starring a study set
+        function toggleStarStudySet(setId) {
+            const starredIds = JSON.parse(localStorage.getItem('githut_starred') || '[]');
+            
+            const index = starredIds.indexOf(setId);
+            if (index !== -1) {
+                // Remove from starred
+                starredIds.splice(index, 1);
+                showToast('info', 'Set Unstarred', 'Set removed from your favorites.');
+            } else {
+                // Add to starred
+                starredIds.push(setId);
+                showToast('success', 'Set Starred', 'Set added to your favorites.');
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('githut_starred', JSON.stringify(starredIds));
+            
+            // Update UI
+            refreshLibrary();
+            
+            // Update favorites count on the set
+            const set = studySets.find(s => s.id === setId);
+            if (set) {
+                if (index !== -1) {
+                    set.favorites = Math.max(0, (set.favorites || 0) - 1);
+                } else {
+                    set.favorites = (set.favorites || 0) + 1;
+                }
+                saveStudySet(set).catch(error => {
+                    console.error('Failed to update favorites count:', error);
+                });
+            }
+        }
+        
+        // Function to edit a study set
+        function editStudySet(setId) {
+            const set = studySets.find(s => s.id === setId);
+            if (!set) {
+                showToast('error', 'Set Not Found', 'Could not find the study set to edit.');
+                return;
+            }
+            
+            // Set as current set
+            currentSet = { ...set };
+            
+            // Switch to create tab
+            document.querySelector('.tab-btn[data-target="create-tab"]').click();
+            
+            // Populate form with set data
+            document.querySelector('.set-title').value = set.title || '';
+            document.querySelector('.set-description').value = set.description || '';
+            
+            // Clear existing cards
+            cardContainer.innerHTML = '';
+            
+            // Add cards
+            set.cards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.innerHTML = `
+                    <div class="card-number">${index + 1}</div>
+                    <div class="card-input-group">
+                        <input type="text" placeholder="Term" value="${escapeHtml(card.term || '')}">
+                        <div class="card-tools">
+                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                            <button class="card-tool-btn"><i class="fas fa-volume-up"></i> Audio</button>
+                        </div>
+                    </div>
+                    <div class="card-input-group">
+                        <textarea placeholder="Definition">${escapeHtml(card.definition || '')}</textarea>
+                        <div class="card-tools">
+                            <button class="card-tool-btn"><i class="fas fa-image"></i> Add Image</button>
+                            <button class="card-tool-btn"><i class="fas fa-font"></i> Format</button>
+                        </div>
+                    </div>
+                    <button class="remove-card-btn"><i class="fas fa-times"></i></button>
+                `;
+                cardContainer.appendChild(cardElement);
+                
+                // Add event listener to remove button
+                const removeBtn = cardElement.querySelector('.remove-card-btn');
+                removeBtn.addEventListener('click', () => removeCard(cardElement));
+            });
+            
+            // Change button text
+            createSetBtn.innerHTML = '<i class="fas fa-save"></i> Update Study Set';
+            
+            // Scroll to editor
+            document.querySelector('.create-set').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Function to share a study set
+        function shareStudySet(setId) {
+            const set = studySets.find(s => s.id === setId);
+            if (!set) {
+                showToast('error', 'Set Not Found', 'Could not find the study set to share.');
+                return;
+            }
+            
+            // Create a share URL
+            const shareUrl = `${window.location.origin}${window.location.pathname}?set=${setId}`;
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showToast('success', 'Link Copied', 'Share link copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy link:', err);
+                showToast('error', 'Copy Failed', 'Could not copy the share link.');
+            });
+        }
+        
+        // Function to open a study set
+        function openStudySet(setId) {
+            const set = studySets.find(s => s.id === setId);
+            if (!set) {
+                showToast('error', 'Set Not Found', 'Could not find the study set.');
+                return;
+            }
+            
+            // Set as current set
+            currentSet = { ...set };
+            
+            // Show study modes
+            studyModes.style.display = 'block';
+            
+            // Update study modes header
+            document.querySelector('.section-title').textContent = 'Study: ' + set.title;
+            
+            // Scroll to study modes
+            studyModes.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // FLASHCARD MODE IMPLEMENTATION
+        function initFlashcardMode(studySet) {
+            // Update document title
+            document.title = `Flashcards: ${studySet.title} | GitHut`;
+            
+            // Reset current card index
+            currentCardIndex = 0;
+            
+            // Show flashcard view
+            flashcardView.style.display = 'block';
+            
+            // Update header
+            document.querySelector('.flashcard-header h2').textContent = studySet.title;
+            
+            // Update flashcard content
+            updateFlashcard();
+            updateProgress();
+            
+            // Scroll to flashcard view
+            flashcardView.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // LEARN MODE IMPLEMENTATION
+        function initLearnMode(studySet) {
+            // Create learn mode view if not exists
+            let learnView = document.getElementById('learn-view');
+            
+            if (!learnView) {
+                learnView = document.createElement('section');
+                learnView.id = 'learn-view';
+                learnView.className = 'flashcard-view';
+                learnView.style.display = 'none';
+                
+                learnView.innerHTML = `
+                    <div class="flashcard-header">
+                        <h2></h2>
+                        <div class="flashcard-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="learn-progress-fill"></div>
+                            </div>
+                            <span class="progress-text" id="learn-progress-text"></span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem; color: var(--text-light);">
+                        <p>Learning mode uses spaced repetition to help you memorize more effectively. Rate your confidence after seeing each answer.</p>
+                    </div>
+                    
+                    <div class="flashcard-container">
+                        <div class="flashcard" id="learn-flashcard">
+                            <div class="flashcard-front">
+                                <div class="card-content"></div>
+                                <div class="card-hint">Click to reveal answer</div>
+                            </div>
+                            <div class="flashcard-back">
+                                <div class="card-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="confidence-buttons" style="display: none; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
+                        <button class="btn" style="background-color: #ff5252; color: white;">
+                            <i class="fas fa-times"></i> Incorrect
+                        </button>
+                        <button class="btn" style="background-color: #ffba00; color: white;">
+                            <i class="fas fa-question"></i> Somewhat
+                        </button>
+                        <button class="btn" style="background-color: #42b983; color: white;">
+                            <i class="fas fa-check"></i> Correct
+                        </button>
+                    </div>
+                    
+                    <div class="flashcard-controls">
+                        <button class="btn btn-outline" id="learn-prev-btn"><i class="fas fa-chevron-left"></i> Previous</button>
+                        <button class="btn btn-secondary" id="learn-flip-btn"><i class="fas fa-retweet"></i> Flip</button>
+                        <button class="btn btn-primary" id="learn-next-btn">Next <i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    
+                    <div id="learn-summary" style="display: none; margin-top: 2rem; text-align: center;">
+                        <h3 style="margin-bottom: 1rem;">Learning Session Complete!</h3>
+                        <div style="background-color: var(--gray-100); padding: 1.5rem; border-radius: var(--border-radius); margin-bottom: 1.5rem;">
+                            <div style="display: flex; justify-content: space-around; margin-bottom: 1rem;">
+                                <div>
+                                    <div style="font-size: 2rem; color: var(--primary); font-weight: 700;"><span id="mastered-count">0</span></div>
+                                    <div>Mastered</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 2rem; color: var(--warning); font-weight: 700;"><span id="reviewing-count">0</span></div>
+                                    <div>Still Learning</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 2rem; color: var(--danger); font-weight: 700;"><span id="struggled-count">0</span></div>
+                                    <div>Need Practice</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="restart-learn-btn">
+                            <i class="fas fa-redo"></i> Restart
+                        </button>
+                        <button class="btn btn-outline" id="exit-learn-btn">
+                            <i class="fas fa-arrow-left"></i> Back to Study Modes
+                        </button>
+                    </div>
+                `;
+                
+                // Add to DOM
+                flashcardView.parentNode.insertBefore(learnView, flashcardView.nextSibling);
+                
+                // Add event listeners
+                const learnFlashcard = document.getElementById('learn-flashcard');
+                const learnFlipBtn = document.getElementById('learn-flip-btn');
+                const learnPrevBtn = document.getElementById('learn-prev-btn');
+                const learnNextBtn = document.getElementById('learn-next-btn');
+                const confidenceButtons = document.getElementById('confidence-buttons');
+                const restartLearnBtn = document.getElementById('restart-learn-btn');
+                const exitLearnBtn = document.getElementById('exit-learn-btn');
+                
+                learnFlashcard.addEventListener('click', toggleLearnFlashcard);
+                learnFlipBtn.addEventListener('click', toggleLearnFlashcard);
+                learnPrevBtn.addEventListener('click', previousLearnCard);
+                learnNextBtn.addEventListener('click', nextLearnCard);
+                
+                confidenceButtons.querySelectorAll('button').forEach((btn, index) => {
+                    btn.addEventListener('click', () => rateConfidence(index));
+                });
+                
+                restartLearnBtn.addEventListener('click', () => initLearnMode(studySet));
+                exitLearnBtn.addEventListener('click', () => {
+                    learnView.style.display = 'none';
+                    studyModes.style.display = 'block';
+                    studyModes.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+            
+            // Update document title
+            document.title = `Learn: ${studySet.title} | GitHut`;
+            
+            // Prepare cards for learning
+            const learningCards = studySet.cards.map(card => ({
+                ...card,
+                mastery: card.mastery || 0,
+                lastReviewed: card.lastReviewed || null,
+                currentSession: {
+                    seen: false,
+                    correct: false,
+                    confidence: -1
+                }
+            }));
+            
+            // Sort cards by mastery level (least mastered first)
+            learningCards.sort((a, b) => (a.mastery || 0) - (b.mastery || 0));
+            
+            // Set as current learning session
+            currentLearnSession = {
+                setId: studySet.id,
+                cards: learningCards,
+                currentIndex: 0,
+                startTime: new Date(),
+                completedCards: 0
+            };
+            
+            // Hide other views
+            flashcardView.style.display = 'none';
+            
+            // Update header
+            learnView.querySelector('.flashcard-header h2').textContent = studySet.title;
+            
+            // Show learn view
+            learnView.style.display = 'block';
+            document.getElementById('confidence-buttons').style.display = 'none';
+            document.getElementById('learn-summary').style.display = 'none';
+            
+            // Update card content
+            updateLearnCard();
+            updateLearnProgress();
+            
+            // Scroll to learn view
+            learnView.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Learn mode variables
+        let currentLearnSession = null;
+        
+        // Function to update learn card
+        function updateLearnCard() {
+            if (!currentLearnSession || currentLearnSession.cards.length === 0) return;
+            
+            const card = currentLearnSession.cards[currentLearnSession.currentIndex];
+            const frontContent = document.querySelector('#learn-flashcard .flashcard-front .card-content');
+            const backContent = document.querySelector('#learn-flashcard .flashcard-back .card-content');
+            
+            frontContent.textContent = card.term || "Term";
+            backContent.textContent = card.definition || "Definition";
+            
+            // Reset flashcard to front side
+            document.getElementById('learn-flashcard').classList.remove('flipped');
+            
+            // Hide confidence buttons when showing front
+            document.getElementById('confidence-buttons').style.display = 'none';
+            
+            // Update navigation buttons
+            document.getElementById('learn-prev-btn').disabled = currentLearnSession.currentIndex === 0;
+            document.getElementById('learn-next-btn').disabled = false;
+            
+            // Mark card as seen in this session
+            card.currentSession.seen = true;
+        }
+        
+        // Function to toggle learn flashcard
+        function toggleLearnFlashcard() {
+            const flashcard = document.getElementById('learn-flashcard');
+            flashcard.classList.toggle('flipped');
+            
+            // Show confidence buttons when flipped to back
+            if (flashcard.classList.contains('flipped')) {
+                document.getElementById('confidence-buttons').style.display = 'flex';
+            } else {
+                document.getElementById('confidence-buttons').style.display = 'none';
+            }
+        }
+        
+        // Function to update learn progress
+        function updateLearnProgress() {
+            if (!currentLearnSession) return;
+            
+            const total = currentLearnSession.cards.length;
+            const current = currentLearnSession.currentIndex + 1;
+            const percentage = (currentLearnSession.completedCards / total) * 100;
+            
+            const progressFill = document.getElementById('learn-progress-fill');
+            const progressText = document.getElementById('learn-progress-text');
+            
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `${currentLearnSession.completedCards} of ${total} learned`;
+        }
+        
+        // Function to go to previous learn card
+        function previousLearnCard() {
+            if (!currentLearnSession || currentLearnSession.currentIndex <= 0) return;
+            
+            currentLearnSession.currentIndex--;
+            updateLearnCard();
+            updateLearnProgress();
+        }
+        
+        // Function to go to next learn card
+        function nextLearnCard() {
+            if (!currentLearnSession) return;
+            
+            // If at the end, show summary
+            if (currentLearnSession.currentIndex >= currentLearn<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
